@@ -190,6 +190,9 @@ export default function Home() {
     setActiveDayIndex(index);
   };
 
+  const isNight = isNightWithOffset(weather?.timezone_offset);
+
+
   // ========================= RENDER =========================
   return (
     <View style={styles.container}>
@@ -359,7 +362,12 @@ export default function Home() {
           {!loading && !error && weather && (
             <>
               {/* MAIN CARD */}
-              <View style={styles.mainCard}>
+              <LinearGradient
+  start={{x:0, y:0}} end={{x:0, y:1}}
+  colors={isNight ? ["#0f0c29", "#2b3663ff"] : ["#3a7bd5", "#00d2ff"]}
+  style={styles.mainCard}
+>
+
                 <Text style={styles.mainCardEmoji}>
                   {getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)}
                 </Text>
@@ -375,7 +383,7 @@ export default function Home() {
                     <Text style={styles.weatherDescription}>{weatherDescription}</Text>
                   </View>
                 </View>
-              </View>
+              </LinearGradient>
 
               {/* GRID 2x3 */}
               <View style={styles.grid}>
@@ -435,7 +443,8 @@ export default function Home() {
         </View>
 
         {/* PREVISÃO DOS PRÓXIMOS DIAS */}
-        {weather?.daily?.length > 0 && (
+        {!loading && weather?.daily?.length > 0 && (
+
           <View style={styles.dailySection}>
             <Text style={styles.dailyTitle}>Próximos dias</Text>
             <View style={styles.dividerLine} />
@@ -560,7 +569,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginHorizontal: 20,
     marginTop: 15,
-    gap: 8,
+    gap: 10,
     zIndex: 1005,
   },
 
@@ -608,10 +617,10 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
-    gap: 8,
+    gap: 15,
   },
   loadingContainer: {
-    padding: 30,
+    padding:40,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
@@ -659,6 +668,7 @@ const styles = StyleSheet.create({
 
   /* ================================== MAIN CARD ================================== */
   main: {
+    flex:1,
     alignItems: "center",
     justifyContent:"center",
     gap: 10,
@@ -684,7 +694,7 @@ const styles = StyleSheet.create({
   mainCard: {
     flexDirection: "row",
     backgroundColor: "#001b7fff",
-    borderRadius:20,
+    borderRadius: 25,
     paddingVertical: 10,
     marginHorizontal: 20,
     margintop: 10,

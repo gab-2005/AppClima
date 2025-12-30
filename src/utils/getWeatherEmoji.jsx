@@ -1,33 +1,45 @@
+// ========================= NIGHT CHECK =========================
 export function isNightWithOffset(offsetInSeconds) {
-  if (offsetInSeconds === undefined || offsetInSeconds === null) {
-    const hour = new Date().getHours();
-    return hour >= 18 || hour < 6;
-  }
+  const offset = typeof offsetInSeconds === "number" ? offsetInSeconds : 0;
+
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const cityTime = new Date(utc + offsetInSeconds * 1000);
+  const cityTime = new Date(utc + offset * 1000);
+
   const hour = cityTime.getHours();
   return hour >= 18 || hour < 6;
 }
 
+// ========================= WEATHER EMOJI =========================
 export function getWeatherEmoji(weatherCode, timezoneOffset, options = {}) {
-  // garante que o timezoneOffset sempre será um número válido
-  const offset = typeof timezoneOffset === "number" ? timezoneOffset : 0;
-  const isNight = isNightWithOffset(offset);
+  if (typeof weatherCode !== "number") return "❓";
 
-  // Se for forçar dia, ignora a noite
+  const isNight = isNightWithOffset(timezoneOffset);
   const nightMode = options.forceDay ? false : isNight;
 
+  // ⛈️ Tempestade
   if ([95, 96, 99].includes(weatherCode)) return "⛈️";
+
+  // 🌧️ / 🌦️ Chuva (independente de mm/h)
   if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode))
     return nightMode ? "🌧️" : "🌦️";
-  if ([71, 73, 75, 77].includes(weatherCode)) return "❄️";
-  if ([45, 48].includes(weatherCode)) return "🌫️";
-  if (weatherCode === 3) return nightMode ? "🌕" : "🌤️";
-  if (weatherCode === 1) return nightMode ? "🌕" : "☀️";
-  if (weatherCode === 2) return nightMode ? "🌕" : "🌤️";
-  if (weatherCode === 0) return nightMode ? "🌕" : "☀️";
 
-  // fallback final só se realmente não tiver código
-  return "❄️";
+  // ❄️ Neve
+  if ([71, 73, 75, 77].includes(weatherCode)) return "❄️";
+
+  // 🌫️ Névoa
+  if ([45, 48].includes(weatherCode)) return "☁️";
+
+  // ☁️ Parcialmente nublado
+  if (weatherCode === 3) return nightMode ? "🌕" : "🌤️";
+
+  // 🌤️ Poucas nuvens
+  if (weatherCode === 2) return nightMode ? "🌕" : "🌤️";
+
+  // ☀️ Céu limpo
+  if (weatherCode === 0 || weatherCode === 1)
+    return nightMode ? "🌕" : "☀️";
+
+  // fallback seguro
+  return "❓";
 }
