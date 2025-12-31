@@ -1,20 +1,31 @@
 // ========================= IMPORTS =========================
-import { 
-  View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Pressable, Animated, ActivityIndicator, StatusBar
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Animated,
+  ActivityIndicator,
+  StatusBar,
 } from "react-native";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
-
 import { useState, useEffect, useRef } from "react";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from 'expo-linear-gradient';
-
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocation, LOCATION_STATUS } from "../hooks/useLocation";
 import { useWeather } from "../hooks/useWeather";
 import { getWeatherDescription } from "../utils/getWeatherDescription";
 import { fetchCitySuggestions } from "../utils/cityApi";
-import { getWeatherEmoji, isNightWithOffset, getDayNightEmoji} from "../utils/getWeatherEmoji";
+import {
+  getWeatherEmoji,
+  isNightWithOffset,
+  getDayNightEmoji,
+} from "../utils/getWeatherEmoji";
 
 // ========================= CONSTANTS =========================
 const statusBarHeight = Constants.statusBarHeight;
@@ -30,7 +41,12 @@ export default function Home() {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [recentCities, setRecentCities] = useState([]);
-  const [searchBoxLayout, setSearchBoxLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [searchBoxLayout, setSearchBoxLayout] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
 
   // ========================= REFERÊNCIAS =========================
   const debounceTimer = useRef(null);
@@ -52,15 +68,23 @@ export default function Home() {
   } = useWeather();
 
   // ========================= VARIÁVEIS DERIVADAS =========================
-  const weatherEmoji = getWeatherEmoji(weather?.weathercode, weather?.timezone_offset);
+  const weatherEmoji = getWeatherEmoji(
+    weather?.weathercode,
+    weather?.timezone_offset
+  );
   const weatherDescription = weather
     ? getWeatherDescription(weather.weathercode, weather?.timezone_offset)
     : "";
   const todayDaily = weather?.daily?.find(
-    d => new Date(d.date).setHours(0,0,0,0) === new Date().setHours(0,0,0,0)
+    (d) =>
+      new Date(d.date).setHours(0, 0, 0, 0) ===
+      new Date().setHours(0, 0, 0, 0)
   );
 
-  const hasSuggestions = citySuggestions.length > 0 || isLoadingSuggestions || showEmptyState;
+  const hasSuggestions =
+    citySuggestions.length > 0 ||
+    isLoadingSuggestions ||
+    showEmptyState;
   const isSearchActive = isInputFocused || hasSuggestions;
   const displayCity = searchedCity || locationLabel;
   const isUsingLocation = !searchedCity;
@@ -86,13 +110,30 @@ export default function Home() {
   useEffect(() => {
     if (isSearchActive) {
       Animated.parallel([
-        Animated.timing(overlayOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.spring(suggestionsScale, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(suggestionsScale, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(overlayOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-        Animated.timing(suggestionsScale, { toValue: 0.9, duration: 200, useNativeDriver: true }),
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(suggestionsScale, {
+          toValue: 0.9,
+          duration: 200,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   }, [isSearchActive]);
@@ -163,7 +204,13 @@ export default function Home() {
     closeSearchUI();
 
     if (latitude && longitude) {
-      fetchWeatherByCoordsWithCity(latitude, longitude, cityName, admin1, country);
+      fetchWeatherByCoordsWithCity(
+        latitude,
+        longitude,
+        cityName,
+        admin1,
+        country
+      );
     } else {
       fetchWeatherByCity(cityName);
     }
@@ -178,13 +225,16 @@ export default function Home() {
   };
 
   function addRecentCity(city) {
-    setRecentCities(prev => {
-      const filtered = prev.filter(item => item.name !== city.name);
+    setRecentCities((prev) => {
+      const filtered = prev.filter((item) => item.name !== city.name);
       return [city, ...filtered].slice(0, 5);
     });
   }
 
-  const showRecentCities = isInputFocused && city.length === 0 && recentCities.length > 0;
+  const showRecentCities =
+    isInputFocused &&
+    city.length === 0 &&
+    recentCities.length > 0;
 
   const handleSelectDay = (day, index) => {
     Haptics.selectionAsync();
@@ -192,7 +242,6 @@ export default function Home() {
   };
 
   const isNight = isNightWithOffset(weather?.timezone_offset);
-
 
   // ========================= RENDER =========================
   return (
@@ -202,48 +251,49 @@ export default function Home() {
         <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
         {/* HEADER */}
-        <View>
+        <View style={styles.containerHeader}>
           <View style={styles.header}>
             <View style={styles.locationBlock}>
               <View style={styles.locationRow}>
                 <Ionicons
                   name={isUsingLocation ? "location-sharp" : "map-outline"}
-                  size={25}
+                  size={20}
                   color="#333"
                 />
-                  <Text style={styles.locationText}>{displayCity}</Text>
+                <Text style={styles.locationText}>{displayCity}</Text>
+
                 {searchedCity && (
                   <TouchableOpacity onPress={handleClearSearch}>
-                    <Ionicons 
-                    name="close-circle" 
-                    size={25} 
-                    color="#666" />
+                    <Ionicons name="close-circle" size={20} color="#666" />
                   </TouchableOpacity>
-              
                 )}
               </View>
 
               {!isUsingLocation && weather?.region && weather?.country && (
                 <Text style={styles.locationSubtext}>
-                  {weather.region}, {weather.country}
+                  {weather.region}{weather.country}
                 </Text>
               )}
               {isUsingLocation && (
                 <Text style={styles.locationSubtext}>Próximo a você</Text>
               )}
             </View>
-            <Ionicons name="settings-outline" size={25} color="#333" />
+
+            <View style={styles.configApp}>
+              <Ionicons name="settings-outline" size={20} color="#333" />
+            </View>
           </View>
 
           {/* INPUT DE PESQUISA */}
-          <View 
+          <View
             style={styles.searchBox}
             onLayout={(event) => {
               const { x, y, width, height } = event.nativeEvent.layout;
               setSearchBoxLayout({ x, y, width, height });
             }}
           >
-            <Ionicons name="search" size={25} color="#666" />
+            <Ionicons name="search" size={20} color="#666" />
+
             <TextInput
               ref={inputRef}
               placeholder="Buscar cidade..."
@@ -259,7 +309,11 @@ export default function Home() {
               }}
               onBlur={() => {
                 blurTimeout.current = setTimeout(() => {
-                  if (citySuggestions.length === 0 && !isLoadingSuggestions && !showEmptyState) {
+                  if (
+                    citySuggestions.length === 0 &&
+                    !isLoadingSuggestions &&
+                    !showEmptyState
+                  ) {
                     setIsInputFocused(false);
                   }
                   blurTimeout.current = null;
@@ -267,20 +321,22 @@ export default function Home() {
               }}
               blurOnSubmit={false}
             />
+
             {city.length > 0 && (
-              <TouchableOpacity 
-                onPress={() => { 
-                  setCity(""); 
-                  setCitySuggestions([]); 
+              <TouchableOpacity
+                onPress={() => {
+                  setCity("");
+                  setCitySuggestions([]);
                   setIsLoadingSuggestions(false);
                   setShowEmptyState(false);
                 }}
               >
-                <Ionicons name="close-circle" size={25} color="#666" />
+                <Ionicons name="close-circle" size={20} color="#666" />
               </TouchableOpacity>
             )}
+
             <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-              <Ionicons name="arrow-forward" size={25} color="#333" />
+              <Ionicons name="arrow-forward" size={20} color="#333" />
             </TouchableOpacity>
           </View>
         </View>
@@ -290,47 +346,83 @@ export default function Home() {
           <Animated.View style={[styles.overlayWrapper, { opacity: overlayOpacity }]}>
             <BlurView intensity={85} tint="dark" style={StyleSheet.absoluteFill} />
             <Pressable style={StyleSheet.absoluteFill} onPress={handleCloseOverlay} />
-            {(citySuggestions.length > 0 || isLoadingSuggestions || showEmptyState || showRecentCities) && (
-              <Animated.View style={[styles.overlayContent, { transform: [{ scale: suggestionsScale }] }]}>
+
+            {(citySuggestions.length > 0 ||
+              isLoadingSuggestions ||
+              showEmptyState ||
+              showRecentCities) && (
+              <Animated.View
+                style={[
+                  styles.overlayContent,
+                  { transform: [{ scale: suggestionsScale }] },
+                ]}
+              >
                 <View style={styles.suggestionsContainer}>
                   {/* RECENT CITIES */}
                   {showRecentCities && (
-                    <ScrollView style={styles.suggestionsList} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                      style={styles.suggestionsList}
+                      keyboardShouldPersistTaps="handled"
+                      showsVerticalScrollIndicator={false}
+                    >
                       {recentCities.map((item, index) => (
-                        <TouchableOpacity key={index} style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
-                          <Ionicons name="time-outline" size={25} color="#666" />
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.suggestionItem}
+                          onPress={() => handleSelectSuggestion(item)}
+                        >
+                          <Ionicons name="time-outline" size={20} color="#666" />
                           <View style={styles.suggestionTextContainer}>
                             <Text style={styles.suggestionName}>{item.name}</Text>
-                            <Text style={styles.suggestionRegion}>{item.admin1}, {item.country}</Text>
+                            <Text style={styles.suggestionRegion}>
+                              {item.admin1}, {item.country}
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
                   )}
+
                   {/* SUGESTÕES DE BUSCA */}
                   {isLoadingSuggestions ? (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color="#666" />
+                      <ActivityIndicator size="small" />
                       <Text style={styles.loadingText}>Buscando cidades...</Text>
                     </View>
                   ) : citySuggestions.length > 0 ? (
-                    <ScrollView style={styles.suggestionsList} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                      style={styles.suggestionsList}
+                      keyboardShouldPersistTaps="handled"
+                      showsVerticalScrollIndicator={false}
+                    >
                       {citySuggestions.map((suggestion, index) => (
-                        <TouchableOpacity key={index} style={styles.suggestionItem} onPress={() => handleSelectSuggestion(suggestion)}>
-                          <Ionicons name="location-outline" size={25} color="#666" />
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.suggestionItem}
+                          onPress={() => handleSelectSuggestion(suggestion)}
+                        >
+                          <Ionicons name="location-outline" size={20} />
                           <View style={styles.suggestionTextContainer}>
-                            <Text style={styles.suggestionName}>{suggestion.name}</Text>
-                            {suggestion.admin1 && <Text style={styles.suggestionRegion}>{suggestion.admin1}, {suggestion.country}</Text>}
+                            <Text style={styles.suggestionName}>
+                              {suggestion.name}
+                            </Text>
+                            {suggestion.admin1 && (
+                              <Text style={styles.suggestionRegion}>
+                                {suggestion.admin1}, {suggestion.country}
+                              </Text>
+                            )}
                           </View>
-                          <Ionicons name="chevron-forward" size={25} color="#ccc" />
+                          <Ionicons name="chevron-forward" size={20} color="#ccc" />
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
                   ) : showEmptyState ? (
                     <View style={styles.emptyContainer}>
-                      <Ionicons name="search-outline" size={25} color="#ccc" />
+                      <Ionicons name="search-outline" size={20} color="#ccc" />
                       <Text style={styles.emptyText}>Nenhuma cidade encontrada</Text>
-                      <Text style={styles.emptySubtext}>Tente buscar com outro nome</Text>
+                      <Text style={styles.emptySubtext}>
+                        Tente buscar com outro nome
+                      </Text>
                     </View>
                   ) : null}
                 </View>
@@ -343,7 +435,7 @@ export default function Home() {
         <View style={styles.main}>
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#333" style={{ transform: [{ scale: 2 }] }} />
+              <ActivityIndicator size="large" style={{ transform: [{ scale: 2 }] }} />
             </View>
           )}
 
@@ -353,7 +445,15 @@ export default function Home() {
                 <Ionicons name="warning-outline" size={28} color="#c0392b" />
                 <Text style={styles.errorTitle}>Erro ao carregar clima</Text>
                 <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={() => searchedCity ? fetchWeatherByCity(searchedCity) : fetchWeatherByCoords()}>
+
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={() =>
+                    searchedCity
+                      ? fetchWeatherByCity(searchedCity)
+                      : fetchWeatherByCoords()
+                  }
+                >
                   <Text style={styles.retryText}>Tentar novamente</Text>
                 </TouchableOpacity>
               </View>
@@ -364,77 +464,120 @@ export default function Home() {
             <>
               {/* MAIN CARD */}
               <LinearGradient
-                start={{x:0, y:0}} end={{x:0, y:1}}
-                colors={isNight ? ["#0f0c29", "#2b3663ff"] : ["#3a7bd5", "#00d2ff"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                colors={
+                  isNight
+                    ? ["#0f0c29", "#2b3663ff"]
+                    : ["#3a7bd5", "#00d2ff"]
+                }
                 style={styles.mainCard}
               >
-
                 <View style={styles.mainCardEmoji}>
-                  <Text style={{fontSize:100}}>
-                    {getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)}
+                  <Text style={{ fontSize: 125 }}>
+                    {getWeatherEmoji(
+                      weather.daily[0].weathercode,
+                      weather?.timezone_offset
+                    )}
                   </Text>
                 </View>
+
                 <View style={styles.mainCardInfo}>
-                  <Text style={styles.weekday}>{new Date().toLocaleDateString("pt-BR", { weekday: "long" })}</Text>
-                  <Text style={styles.dayMonth}>{new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}</Text>
-                  <Text style={styles.tempText}>{Math.round(weather.temperature)}°C</Text>
+                  <Text style={styles.weekday}>
+                    {new Date().toLocaleDateString("pt-BR", { weekday: "long" })}
+                  </Text>
+                  <Text style={styles.dayMonth}>
+                    {new Date().toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                    })}
+                  </Text>
+                  <Text style={styles.tempText}>
+                    {Math.round(weather.temperature)}°C
+                  </Text>
+
                   <View style={styles.weatherDescription}>
-                    <Ionicons name={getDayNightEmoji(weather?.timezone_offset)} size={15} color="#fff"/>
-                    <Text style={styles.DescriptionText}>{getWeatherDescription(weather.daily[0].weathercode, weather?.timezone_offset)}</Text>
+                    <Ionicons
+                      style={styles.DescriptionEmoiji}
+                      name={getDayNightEmoji(weather?.timezone_offset)}
+                    />
+                    <Text style={styles.DescriptionText}>
+                      {getWeatherDescription(
+                        weather.daily[0].weathercode,
+                        weather?.timezone_offset
+                      )}
+                    </Text>
                   </View>
                 </View>
               </LinearGradient>
 
               {/* GRID 2x3 */}
               <View style={styles.grid}>
-                {/* CARD UMIDADE */}
+                {/* UMIDADE */}
                 <View style={styles.card}>
                   <View style={styles.cardInner}>
-                    <Ionicons name="water-outline" size={25} color="#1e90ff" />
+                    <Ionicons name="water-outline" size={25} />
                     <Text style={styles.cardLabel}>Umidade</Text>
-                    <Text style={styles.cardValue}>{weather.humidity ?? 0}%</Text>
-                  </View>
-                </View>
-                {/* CARD SENSAÇÃO */}
-                <View style={styles.card}>
-                  <View style={styles.cardInner}>
-                    <Ionicons name="thermometer-outline" size={25} color="#333" />
-                    <Text style={styles.cardLabel}>Sensação</Text>
-                    <Text style={styles.cardValue}>{Math.round(weather.apparent_temperature)}°C</Text>
-                  </View>
-                </View>
-                {/* CARD MÁX */}
-                <View style={styles.card}>
-                  <View style={[styles.cardInner, { backgroundColor:"#a80000ff" }]}>
-                    <Ionicons name="arrow-up-outline" size={25} color="#fff" />
-                    <Text style={styles.cardLabelWhite}>Máx</Text>
-                    <Text style={styles.cardValueWhite}>{Math.round(weather.tempMax)}°C</Text>
-                  </View>
-                </View>
-                {/* CARD CHUVA */}
-                <View style={styles.card}>
-                  <View style={styles.cardInner}>
-                    <Ionicons name="rainy-outline" size={25} color="#4682b4" />
-                    <Text style={styles.cardLabel}>Chuva</Text>
                     <Text style={styles.cardValue}>
-                      {weather.precipitation_hourly !== undefined ? `${weather.precipitation_hourly} mm/h` : `${weather.precipitation ?? 0} mm`}
+                      {weather.humidity ?? 0}%
                     </Text>
                   </View>
                 </View>
-                {/* CARD VENTO */}
+
+                {/* SENSAÇÃO */}
                 <View style={styles.card}>
                   <View style={styles.cardInner}>
-                    <Ionicons name="leaf-outline" size={25} color="#2e8b57" />
-                    <Text style={styles.cardLabel}>Vento</Text>
-                    <Text style={styles.cardValue}>{weather.windspeed} km/h</Text>
+                    <Ionicons name="thermometer-outline" size={25} />
+                    <Text style={styles.cardLabel}>Sensação</Text>
+                    <Text style={styles.cardValue}>
+                      {Math.round(weather.apparent_temperature)}°C
+                    </Text>
                   </View>
                 </View>
-                {/* CARD MÍN */}
+
+                {/* MÁX */}
                 <View style={styles.card}>
-                  <View style={[styles.cardInner, { backgroundColor:"#001b7fff" }]}>
+                  <View style={[styles.cardInner, { backgroundColor: "#a80000ff" }]}>
+                    <Ionicons name="arrow-up-outline" size={25} color="#fff" />
+                    <Text style={styles.cardLabelWhite}>Máx</Text>
+                    <Text style={styles.cardValueWhite}>
+                      {Math.round(weather.tempMax)}°C
+                    </Text>
+                  </View>
+                </View>
+
+                {/* CHUVA */}
+                <View style={styles.card}>
+                  <View style={styles.cardInner}>
+                    <Ionicons name="rainy-outline" size={25} />
+                    <Text style={styles.cardLabel}>Chuva</Text>
+                    <Text style={styles.cardValue}>
+                      {weather.precipitation_hourly !== undefined
+                        ? `${weather.precipitation_hourly} mm/h`
+                        : `${weather.precipitation ?? 0} mm`}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* VENTO */}
+                <View style={styles.card}>
+                  <View style={styles.cardInner}>
+                    <Ionicons name="leaf-outline" size={25} />
+                    <Text style={styles.cardLabel}>Vento</Text>
+                    <Text style={styles.cardValue}>
+                      {weather.windspeed} km/h
+                    </Text>
+                  </View>
+                </View>
+
+                {/* MÍN */}
+                <View style={styles.card}>
+                  <View style={[styles.cardInner, { backgroundColor: "#001b7fff" }]}>
                     <Ionicons name="arrow-down-outline" size={25} color="#fff" />
                     <Text style={styles.cardLabelWhite}>Mín</Text>
-                    <Text style={styles.cardValueWhite}>{Math.round(weather.tempMin)}°C</Text>
+                    <Text style={styles.cardValueWhite}>
+                      {Math.round(weather.tempMin)}°C
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -442,80 +585,96 @@ export default function Home() {
           )}
         </View>
 
-        {/* PREVISÃO DOS PRÓXIMOS DIAS */}
+        {/* PREVISÃO DIÁRIA */}
         {!loading && weather?.daily?.length > 0 && (
-
           <View style={styles.dailySection}>
             <Text style={styles.dailyTitle}>Próximos dias</Text>
             <View style={styles.dividerLine} />
 
-            <View style={{ position: 'relative' }}>
+            <View style={{ position: "relative" }}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.dailyList}
               >
                 {weather.daily
-  ?.filter(d => new Date(d.date).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0))
-  .map((item, i) => {
-    const date = new Date(item.date);
-    const today = new Date();
-    const d1 = date.setHours(0,0,0,0);
-    const d2 = today.setHours(0,0,0,0);
+                  ?.filter(
+                    (d) =>
+                      new Date(d.date).setHours(0, 0, 0, 0) >=
+                      new Date().setHours(0, 0, 0, 0)
+                  )
+                  .map((item, i) => {
+                    const date = new Date(item.date);
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    tomorrow.setHours(0, 0, 0, 0);
 
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-    tomorrow.setHours(0,0,0,0);
+                    const d1 = new Date(item.date).setHours(0, 0, 0, 0);
+                    const d2 = today.setHours(0, 0, 0, 0);
 
-    const isToday = d1 === d2;
+                    const isToday = d1 === d2;
 
-    const label = isToday
-      ? "Hoje"
-      : d1 === tomorrow.getTime()
-        ? "Amanhã"
-        : new Date(item.date).toLocaleDateString("pt-BR", { weekday: "short" });
+                    const label = isToday
+                      ? "Hoje"
+                      : d1 === tomorrow.getTime()
+                      ? "Amanhã"
+                      : new Date(item.date).toLocaleDateString("pt-BR", {
+                          weekday: "short",
+                        });
 
-    const emoji = isToday
-      ? getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)
-      : getWeatherEmoji(item.weathercode, weather?.timezone_offset, { forceDay: true });
+                    const emoji = isToday
+                      ? getWeatherEmoji(
+                          weather.daily[0].weathercode,
+                          weather?.timezone_offset
+                        )
+                      : getWeatherEmoji(item.weathercode, weather?.timezone_offset, {
+                          forceDay: true,
+                        });
 
-    return (
-      <Pressable
-        key={i}
-        onPress={() => handleSelectDay(item, i)}
-        style={[styles.dailyCard, i === activeDayIndex && styles.dailyCardActive]}
-      >
-        <Text style={styles.dailyDay}>{label}</Text>
-        <View style={styles.dividerLine} />
-        <Text style={{ fontSize: 25 }}>{emoji}</Text>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dailyTempMax}>
-          {isToday ? Math.round(weather.tempMax) : Math.round(item.tempMax)}°
-        </Text>
-        <Text style={styles.dailyTempMin}>
-          {isToday ? Math.round(weather.tempMin) : Math.round(item.tempMin)}°
-        </Text>
-      </Pressable>
-    );
-  })}
-
-                
-             
+                    return (
+                      <Pressable
+                        key={i}
+                        onPress={() => handleSelectDay(item, i)}
+                        style={[
+                          styles.dailyCard,
+                          i === activeDayIndex && styles.dailyCardActive,
+                        ]}
+                      >
+                        <Text style={styles.dailyDay}>{label}</Text>
+                        <View style={styles.dividerLine} />
+                        <Text style={{ fontSize: 25 }}>{emoji}</Text>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dailyTempMax}>
+                          {isToday
+                            ? Math.round(weather.tempMax)
+                            : Math.round(item.tempMax)}
+                          °
+                        </Text>
+                        <Text style={styles.dailyTempMin}>
+                          {isToday
+                            ? Math.round(weather.tempMin)
+                            : Math.round(item.tempMin)}
+                          °
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
               </ScrollView>
 
-              {/* GRADIENTES */}
+              {/* GRADIENTES LATERAIS */}
               <LinearGradient
-                colors={['#fff', '#fff', 'transparent']}
+                colors={["#fff", "#fff", "transparent"]}
                 start={{ x: 1, y: 0 }}
                 end={{ x: 0, y: 0 }}
-                style={{ position: 'absolute', right: 0, top: 0, bottom: 20, width: 20 }}
+                style={{ position: "absolute", right: 0, top: 0, bottom: 20, width: 20 }}
                 pointerEvents="none"
               />
               <LinearGradient
-                colors={['#fff', '#fff', 'transparent']}
+                colors={["#fff", "#fff", "transparent"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={{ position: 'absolute', left: 0, top: 0, bottom: 20, width: 20 }}
+                style={{ position: "absolute", left: 0, top: 0, bottom: 20, width: 20 }}
                 pointerEvents="none"
               />
             </View>
@@ -528,104 +687,129 @@ export default function Home() {
 
 // ========================= STYLES =========================
 const styles = StyleSheet.create({
-  /* ================================== CONTAINER ================================== */
+
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* ||||||||||||||||| CONTAINER |||||||||||||||| */
+
   container: {
     flex: 1,
-    paddingTop: Constants.statusBarHeight + 12,
-    fontFamily: "Arial",
-    justifyContent:'space-between',
+    paddingTop: Constants.statusBarHeight + 0,
   },
 
-  /* ================================== HEADER ================================== */
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* |||||||||||||||||| HEADER |||||||||||||||||| */
+
+  containerHeader:{
+  },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: 30,
+    marginHorizontal: 20,
+    padding: 10,
+  },
+
+  locationBlock:{
   },
 
   locationRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
+    gap: 5,
   },
 
-  locationText:{                                                                             
+  locationText: {
     fontWeight: "bold",
-    fontSize: 18,
-  },
-
-  locationBlock: {
-    gap: 4,
+    fontSize: 16,
   },
 
   locationSubtext: {
-    fontSize: 15,
     color: "#777",
-    marginStart: 40,
+    marginStart: 25,
+  },
+  
+  configApp:{
   },
 
-  /* ================================== SEARCH BOX ================================== */
+   /* |||||||||||||||||||||||||||||||||||||||||||| */
+   /* |||||||||||||||||| SEARCH |||||||||||||||||| */
+
   searchBox: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
+    justifyContent:"center",
+    alignItems:"center",
     marginHorizontal: 20,
-    marginVertical: 15,
-    gap: 10,
+    marginVertical: 20,
+    borderRadius: 20,
+    backgroundColor: "#fff",
     zIndex: 1005,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    gap: 5,
   },
 
   input: {
     flex: 1,
-    height: 40,
   },
 
   searchButton: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
+
   },
 
-  /* ================================== OVERLAY ================================== */
+   /* |||||||||||||||||||||||||||||||||||||||||||| */
+   /* ||||||||||||||||||| OVERLAY |||||||||||||||| */
+
+
   overlayWrapper: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
   },
 
   overlayContent: {
-    paddingHorizontal: 20,
     zIndex: 1001,
-    marginTop: statusBarHeight + 120,
+    marginTop: statusBarHeight + 140,
   },
 
   suggestionsContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    shadowColor: "#000",
     overflow: "hidden",
-    maxHeight: 450,
-    marginVertical: 20,
+    marginHorizontal: 20,
+    borderRadius: 20,
+    maxHeight: 450, // Limite de altura
+    backgroundColor: "#fff",
   },
 
   suggestionsList: {
-    maxHeight: 450,
+    maxHeight: 450, // Limite de altura do scroll
   },
 
   suggestionItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 15,
+    justifyContent:"center",
     borderBottomWidth: 1,
+    padding: 10,
+    gap: 5,
     borderBottomColor: "#f0f0f0",
-    gap: 15,
   },
+
+  suggestionTextContainer: {
+    flex: 1,
+  },
+
+  suggestionName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+
+  suggestionRegion: {
+    fontSize: 12,
+    color: "#666",
+  },
+
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+
   loadingContainer: {
-    padding:40,
+    padding: 40,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
@@ -641,6 +825,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+
   },
 
   emptyText: {
@@ -648,35 +833,22 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#666",
     marginTop: 8,
-  },
 
+  },
+  
   emptySubtext: {
     fontSize: 12.5,
     color: "#999",
   },
 
-  suggestionTextContainer: {
-    flex: 1,
-  },
-
-  suggestionName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
-  },
-
-  suggestionRegion: {
-    fontSize: 12.5,
-    color: "#666",
-    
-  },
-
-  /* ||||||||||||||||||||||||||||||||||||||||| MAIN CARD ||||||||||||||||||||||||||||||||||||||||| */
+  /* ||||||||||||||||||| MAIN ||||||||||||||||||| */
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
 
   main: {
     flex: 1,
-    justifyContent: "center",
   },
+
+   /* |||||||||||||||||||||||||||||||||||||||||||| */
 
   mainCard: {
     flexDirection: "row",
@@ -687,7 +859,7 @@ const styles = StyleSheet.create({
   },
 
   mainCardEmoji: {
-    flex: 1, 
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -714,32 +886,36 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  weatherDescription:{
+  weatherDescription: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap:  5,
+    gap: 5,
   },
 
-  DescriptionText:{
+  DescriptionEmoiji: {
+    fontSize: 18,
+    color: "#fff",
+  },
+
+  DescriptionText: {
     textAlign: "center",
     fontSize: 10,
-    color:"#fff"
+    color: "#fff",
   },
- /* ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| */
 
- /* ||||||||||||||||||||||||||||||||||||||||| GRID CARDS |||||||||||||||||||||||||||||||||||||||| */
+   /* |||||||||||||||||||||||||||||||||||||||||||| */
 
   grid: {
-    justifyContent:"space-between",
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal:20,
+    marginHorizontal: 20,
+    justifyContent: "space-between",
   },
 
   card: {
-    width: "33.333%", 
-    alignItems:"center",
+    width: "33.333%",
+    alignItems: "center",
     marginTop: 20,
   },
 
@@ -758,7 +934,7 @@ const styles = StyleSheet.create({
   },
 
   cardValue: {
-    fontSize: 12 ,
+    fontSize: 12,
     fontWeight: "600",
     color: "#333",
     textAlign: "center",
@@ -776,34 +952,38 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  /* ================================== DAILY FORECAST ================================== */
-  dailySection:{
-    backgroundColor:"white",
+   /* |||||||||||||||||||||||||||||||||||||||||||| */
+
+  dailySection: {
+    backgroundColor: "white",
     margin: 20,
-    borderRadius:20,
+    borderRadius: 20,
     elevation: 2,
   },
 
   dailyTitle: {
     fontSize: 15,
-    color:"#333",
-    textAlign: "center",
-    justifyContent:"center",
     fontWeight: "800",
+    color: "#333",
+    textAlign: "center",
     padding: 10,
+  },
+
+  dailyList: {
+    paddingEnd: 10,
+    paddingBottom: 20,
   },
 
   dailyCard: {
     width: 60,
-    padding: 0,
     borderRadius: 20,
     justifyContent: "space-between",
     alignItems: "center",
     marginStart: 10,
     paddingTop: 10,
-    paddingBottom: 30 ,
-   
+    paddingBottom: 30,
   },
+
   dailyDay: {
     fontSize: 12,
     fontWeight: "700",
@@ -816,6 +996,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#333",
   },
+
   dailyTempMin: {
     fontSize: 12,
     fontWeight: "800",
@@ -832,3 +1013,5 @@ const styles = StyleSheet.create({
 
   dailyCardActive: {},
 });
+
+ /* |||||||||||||||||||||||||||||||||||||||||||| */

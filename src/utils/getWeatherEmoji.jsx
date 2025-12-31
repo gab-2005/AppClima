@@ -36,11 +36,11 @@ const weatherEmojis = {
   73: { day: "❄️", night: "❄️" },     // Neve moderada
   75: { day: "❄️", night: "❄️" },     // Neve intensa
   77: { day: "❄️", night: "❄️" },     // Granizo
-  80: { day: "🌦️", night: "☁️" },     // Chuva fraca
+  80: { day: "☁️", night: "☁️" },     // Chuva fraca
   81: { day: "🌦️", night: "🌧️" },     // Chuva moderada
   82: { day: "🌦️", night: "🌧️" },     // Chuva forte
   95: { day: "🌦️", night: "☁️" },     // Tempestade leve
-  96: { day: "⛈️", night: "⛈️" },     // Tempestade com granizo
+  96: { day: "🌤️", night: "☁️" },     // Tempestade com granizo
   99: { day: "⛈️", night: "⛈️" }      // Tempestade intensa
 };
 
