@@ -4,6 +4,7 @@ import {
 } from "react-native";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
+
 import { useState, useEffect, useRef } from "react";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
@@ -13,7 +14,7 @@ import { useLocation, LOCATION_STATUS } from "../hooks/useLocation";
 import { useWeather } from "../hooks/useWeather";
 import { getWeatherDescription } from "../utils/getWeatherDescription";
 import { fetchCitySuggestions } from "../utils/cityApi";
-import { getWeatherEmoji, isNightWithOffset } from "../utils/getWeatherEmoji";
+import { getWeatherEmoji, isNightWithOffset, getDayNightEmoji} from "../utils/getWeatherEmoji";
 
 // ========================= CONSTANTS =========================
 const statusBarHeight = Constants.statusBarHeight;
@@ -206,7 +207,7 @@ export default function Home() {
             <View style={styles.locationBlock}>
               <View style={styles.locationRow}>
                 <Ionicons
-                  name={isUsingLocation ? "location" : "search"}
+                  name={isUsingLocation ? "location-sharp" : "map-outline"}
                   size={25}
                   color="#333"
                 />
@@ -216,7 +217,7 @@ export default function Home() {
                     <Ionicons 
                     name="close-circle" 
                     size={25} 
-                    color="#666666ff" />
+                    color="#666" />
                   </TouchableOpacity>
               
                 )}
@@ -380,7 +381,10 @@ export default function Home() {
                   </Text>
                   <Text style={styles.tempText}>{Math.round(weather.temperature)}°C</Text>
                   <View style={styles.row}>
-                    <Text style={styles.weatherDescription}>{weatherDescription}</Text>
+                     <Ionicons name={getDayNightEmoji(weather?.timezone_offset)} size={20} color="#fff" /> 
+                        <Text style={styles.weatherDescription}>
+                          {getWeatherDescription(weather.daily[0].weathercode, weather?.timezone_offset)}
+                        </Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -456,46 +460,51 @@ export default function Home() {
                 contentContainerStyle={styles.dailyList}
               >
                 {weather.daily
-                  ?.filter(d => new Date(d.date).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0))
-                  .map((item, i) => {
-                    const date = new Date(item.date);
-                    const today = new Date();
-                    const d1 = date.setHours(0,0,0,0);
-                    const d2 = today.setHours(0,0,0,0);
+  ?.filter(d => new Date(d.date).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0))
+  .map((item, i) => {
+    const date = new Date(item.date);
+    const today = new Date();
+    const d1 = date.setHours(0,0,0,0);
+    const d2 = today.setHours(0,0,0,0);
 
-                    const tomorrow = new Date();
-                      tomorrow.setDate(today.getDate() + 1);
-                      tomorrow.setHours(0,0,0,0);
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(0,0,0,0);
 
-                      const label = d1 === d2
-                        ? "Hoje"
-                        : d1 === tomorrow.getTime()
-                          ? "Amanhã"
-                          : new Date(item.date).toLocaleDateString("pt-BR", { weekday: "short" });
+    const isToday = d1 === d2;
 
+    const label = isToday
+      ? "Hoje"
+      : d1 === tomorrow.getTime()
+        ? "Amanhã"
+        : new Date(item.date).toLocaleDateString("pt-BR", { weekday: "short" });
 
-                    
+    const emoji = isToday
+      ? getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)
+      : getWeatherEmoji(item.weathercode, weather?.timezone_offset, { forceDay: true });
 
-                    const emoji = (d1 === d2)
-                      ? getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)
-                      : getWeatherEmoji(item.weathercode, weather?.timezone_offset, { forceDay: true });
+    return (
+      <Pressable
+        key={i}
+        onPress={() => handleSelectDay(item, i)}
+        style={[styles.dailyCard, i === activeDayIndex && styles.dailyCardActive]}
+      >
+        <Text style={styles.dailyDay}>{label}</Text>
+        <View style={styles.dividerLine} />
+        <Text style={{ fontSize: 25 }}>{emoji}</Text>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dailyTempMax}>
+          {isToday ? Math.round(weather.tempMax) : Math.round(item.tempMax)}°
+        </Text>
+        <Text style={styles.dailyTempMin}>
+          {isToday ? Math.round(weather.tempMin) : Math.round(item.tempMin)}°
+        </Text>
+      </Pressable>
+    );
+  })}
 
-                    return (
-                      <Pressable
-                        key={i}
-                        onPress={() => handleSelectDay(item, i)}
-                        style={[styles.dailyCard, i === activeDayIndex && styles.dailyCardActive]}
-                      >
-                        <Text style={styles.dailyDay}>{label}</Text>
-                        <View style={styles.dividerLine} />
-                        <Text style={{ fontSize: 25 }}>{emoji}</Text>
-                        <View style={styles.dividerLine} />
-                        <Text style={styles.dailyTemp}>
-                          {Math.round(item.tempMax)}° / {Math.round(item.tempMin)}°
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+                
+             
               </ScrollView>
 
               {/* GRADIENTES */}
@@ -544,7 +553,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  locationText: {                                                                                   
+  locationText:{                                                                             
     fontWeight: "bold",
     fontSize: 18,
   },
@@ -566,9 +575,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 25,
+    borderRadius: 20,
     marginHorizontal: 20,
-    marginTop: 15,
+    marginVertical: 15,
     gap: 10,
     zIndex: 1005,
   },
@@ -599,11 +608,11 @@ const styles = StyleSheet.create({
 
   suggestionsContainer: {
     backgroundColor: "#fff",
-    borderRadius: 25,
+    borderRadius: 20,
     shadowColor: "#000",
     overflow: "hidden",
     maxHeight: 450,
-    marginTop: 15,
+    marginVertical: 20,
   },
 
   suggestionsList: {
@@ -663,7 +672,7 @@ const styles = StyleSheet.create({
   suggestionRegion: {
     fontSize: 12.5,
     color: "#666",
-    marginTop: 2,
+    
   },
 
   /* ================================== MAIN CARD ================================== */
@@ -671,7 +680,6 @@ const styles = StyleSheet.create({
     flex:1,
     alignItems: "center",
     justifyContent:"center",
-    gap: 10,
   },
 
   weekday: {
@@ -686,7 +694,7 @@ const styles = StyleSheet.create({
   },
 
   tempText: {
-    fontSize:60,
+    fontSize:40,
     fontWeight: "bold",
     color: "#fff",
   },
@@ -694,10 +702,9 @@ const styles = StyleSheet.create({
   mainCard: {
     flexDirection: "row",
     backgroundColor: "#001b7fff",
-    borderRadius: 25,
+    borderRadius: 20,
     paddingVertical: 10,
     marginHorizontal: 20,
-    margintop: 10,
   },
 
   mainCardEmoji: {
@@ -708,12 +715,22 @@ const styles = StyleSheet.create({
 
   mainCardInfo: {
     justifyContent:"center",
-    alignItems: "flex-end",
+    alignItems: "center",
     paddingEnd: 30,
+  },
+  row:{
+    flexDirection:"row",
+        justifyContent:"center",
+        alignItems:"center",
+        gap: 8,
+
+
   },
 
   weatherDescription:{
     color:"#fff",
+    fontSize: 12,
+   
   },
 
   /* ================================== GRID ================================== */
@@ -727,13 +744,14 @@ const styles = StyleSheet.create({
   card: {
     width: "33.333%", 
     alignItems:"center",
-    marginBlock:10, 
+    marginTop: 20,
   },
 
   cardInner: {
     width: 80,
     backgroundColor: "#fff",
-    borderRadius: 15,
+    borderRadius: 20,
+    elevation: 2,
     alignItems: "center",
     paddingVertical: 8,
   },
@@ -766,21 +784,23 @@ const styles = StyleSheet.create({
   dailySection:{
     backgroundColor:"white",
     margin: 20,
-    borderRadius: 20,
+    borderRadius:20,
+    elevation: 2,
   },
 
   dailyTitle: {
     fontSize: 15,
     color:"#333",
     textAlign: "center",
-    fontWeight: "600",
+    justifyContent:"center",
+    fontWeight: "800",
     padding: 10,
   },
 
   dailyCard: {
     width: 60,
     padding: 0,
-    borderRadius: 10,
+    borderRadius: 20,
     justifyContent: "space-between",
     alignItems: "center",
     marginStart: 10,
@@ -795,17 +815,23 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
 
-  dailyTemp: {
+  dailyTempMax: {
     fontSize: 12,
     fontWeight: "800",
     color: "#333",
   },
+  dailyTempMin: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#999",
+  },
 
   dividerLine: {
-    marginHorizontal: 0,
-    height: 1,
+    marginHorizontal: 20,
+    height: 1.25,
     backgroundColor: "#99999970",
     marginVertical: 2,
+    borderRadius: 10,
   },
 
   dailyCardActive: {},

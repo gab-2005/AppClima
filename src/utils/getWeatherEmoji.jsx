@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 // ========================= NIGHT CHECK =========================
 export function isNightWithOffset(offsetInSeconds) {
   const offset = typeof offsetInSeconds === "number" ? offsetInSeconds : 0;
@@ -10,36 +11,44 @@ export function isNightWithOffset(offsetInSeconds) {
   return hour >= 18 || hour < 6;
 }
 
-// ========================= WEATHER EMOJI =========================
-export function getWeatherEmoji(weatherCode, timezoneOffset, options = {}) {
-  if (typeof weatherCode !== "number") return "❓";
+export function getDayNightEmoji(timezoneOffset) {
+  const isNight = isNightWithOffset(timezoneOffset);
+  return isNight ? "moon-outline" : "sunny-outline"; // Lua à noite, Sol de dia
+}
 
+// ========================= WEATHER EMOJI =========================
+const weatherEmojis = {
+  0: { day: "☀️", night: "🌕" },       // Céu limpo
+  1: { day: "☀️", night: "🌕" },       // Principalmente limpo
+  2: { day: "🌤️", night: "🌙" },       // Poucas nuvens
+  3: { day: "☁️", night: "☁️" },       // Parcialmente nublado
+  45: { day: "🌫️", night: "🌫️" },     // Névoa
+  48: { day: "🌫️", night: "🌫️" },     // Névoa com gelo
+  51: { day: "🌦️", night: "☁️" },     // Chuva fraca (garoa)
+  53: { day: "🌦️", night: "🌧️" },     // Chuva moderada (garoa)
+  55: { day: "🌦️", night: "🌧️" },     // Chuva intensa (garoa)
+  61: { day: "🌦️", night: "☁️" },     // Chuva leve
+  63: { day: "🌦️", night: "🌧️" },     // Chuva moderada
+  65: { day: "🌦️", night: "🌧️" },     // Chuva forte
+  66: { day: "🌧️", night: "☁️" },     // Chuva congelante fraca
+  67: { day: "🌧️", night: "🌧️" },     // Chuva congelante forte
+  71: { day: "❄️", night: "❄️" },     // Neve fraca
+  73: { day: "❄️", night: "❄️" },     // Neve moderada
+  75: { day: "❄️", night: "❄️" },     // Neve intensa
+  77: { day: "❄️", night: "❄️" },     // Granizo
+  80: { day: "🌦️", night: "☁️" },     // Chuva fraca
+  81: { day: "🌦️", night: "🌧️" },     // Chuva moderada
+  82: { day: "🌦️", night: "🌧️" },     // Chuva forte
+  95: { day: "🌦️", night: "☁️" },     // Tempestade leve
+  96: { day: "⛈️", night: "⛈️" },     // Tempestade com granizo
+  99: { day: "⛈️", night: "⛈️" }      // Tempestade intensa
+};
+
+export function getWeatherEmoji(weatherCode, timezoneOffset, options = {}) {
   const isNight = isNightWithOffset(timezoneOffset);
   const nightMode = options.forceDay ? false : isNight;
 
-  // ⛈️ Tempestade
-  if ([95, 96, 99].includes(weatherCode)) return "⛈️";
+  if (!weatherEmojis.hasOwnProperty(weatherCode)) return "❓";
 
-  // 🌧️ / 🌦️ Chuva (independente de mm/h)
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode))
-    return nightMode ? "🌧️" : "🌦️";
-
-  // ❄️ Neve
-  if ([71, 73, 75, 77].includes(weatherCode)) return "❄️";
-
-  // 🌫️ Névoa
-  if ([45, 48].includes(weatherCode)) return "☁️";
-
-  // ☁️ Parcialmente nublado
-  if (weatherCode === 3) return nightMode ? "🌕" : "🌤️";
-
-  // 🌤️ Poucas nuvens
-  if (weatherCode === 2) return nightMode ? "🌕" : "🌤️";
-
-  // ☀️ Céu limpo
-  if (weatherCode === 0 || weatherCode === 1)
-    return nightMode ? "🌕" : "☀️";
-
-  // fallback seguro
-  return "❓";
+  return nightMode ? weatherEmojis[weatherCode].night : weatherEmojis[weatherCode].day;
 }
