@@ -364,27 +364,23 @@ export default function Home() {
             <>
               {/* MAIN CARD */}
               <LinearGradient
-  start={{x:0, y:0}} end={{x:0, y:1}}
-  colors={isNight ? ["#0f0c29", "#2b3663ff"] : ["#3a7bd5", "#00d2ff"]}
-  style={styles.mainCard}
->
+                start={{x:0, y:0}} end={{x:0, y:1}}
+                colors={isNight ? ["#0f0c29", "#2b3663ff"] : ["#3a7bd5", "#00d2ff"]}
+                style={styles.mainCard}
+              >
 
-                <Text style={styles.mainCardEmoji}>
-                  {getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)}
-                </Text>
+                <View style={styles.mainCardEmoji}>
+                  <Text style={{fontSize:100}}>
+                    {getWeatherEmoji(weather.daily[0].weathercode, weather?.timezone_offset)}
+                  </Text>
+                </View>
                 <View style={styles.mainCardInfo}>
-                  <Text style={styles.weekday}>
-                    {new Date().toLocaleDateString("pt-BR", { weekday: "long" })}
-                  </Text>
-                  <Text style={styles.dayMonth}>
-                    {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}
-                  </Text>
+                  <Text style={styles.weekday}>{new Date().toLocaleDateString("pt-BR", { weekday: "long" })}</Text>
+                  <Text style={styles.dayMonth}>{new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}</Text>
                   <Text style={styles.tempText}>{Math.round(weather.temperature)}°C</Text>
-                  <View style={styles.row}>
-                     <Ionicons name={getDayNightEmoji(weather?.timezone_offset)} size={20} color="#fff" /> 
-                        <Text style={styles.weatherDescription}>
-                          {getWeatherDescription(weather.daily[0].weathercode, weather?.timezone_offset)}
-                        </Text>
+                  <View style={styles.weatherDescription}>
+                    <Ionicons name={getDayNightEmoji(weather?.timezone_offset)} size={15} color="#fff"/>
+                    <Text style={styles.DescriptionText}>{getWeatherDescription(weather.daily[0].weathercode, weather?.timezone_offset)}</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -675,16 +671,36 @@ const styles = StyleSheet.create({
     
   },
 
-  /* ================================== MAIN CARD ================================== */
+  /* ||||||||||||||||||||||||||||||||||||||||| MAIN CARD ||||||||||||||||||||||||||||||||||||||||| */
+
   main: {
-    flex:1,
+    flex: 1,
+    justifyContent: "center",
+  },
+
+  mainCard: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginHorizontal: 20,
+    borderRadius: 20,
+    minHeight: 180,
+  },
+
+  mainCardEmoji: {
+    flex: 1, 
+    justifyContent: "center",
     alignItems: "center",
-    justifyContent:"center",
+  },
+
+  mainCardInfo: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 2,
   },
 
   weekday: {
-    fontSize: 20,
-    textTransform: "capitalize",
+    fontSize: 25,
     color: "#fff",
   },
 
@@ -694,46 +710,26 @@ const styles = StyleSheet.create({
   },
 
   tempText: {
-    fontSize:40,
-    fontWeight: "bold",
+    fontSize: 40,
     color: "#fff",
   },
 
-  mainCard: {
-    flexDirection: "row",
-    backgroundColor: "#001b7fff",
-    borderRadius: 20,
-    paddingVertical: 10,
-    marginHorizontal: 20,
-  },
-
-  mainCardEmoji: {
-    flex: 1,
-    fontSize: 125,
-    paddingHorizontal:15,  
-  },
-
-  mainCardInfo: {
-    justifyContent:"center",
-    alignItems: "center",
-    paddingEnd: 30,
-  },
-  row:{
-    flexDirection:"row",
-        justifyContent:"center",
-        alignItems:"center",
-        gap: 8,
-
-
-  },
-
   weatherDescription:{
-    color:"#fff",
-    fontSize: 12,
-   
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap:  5,
   },
 
-  /* ================================== GRID ================================== */
+  DescriptionText:{
+    textAlign: "center",
+    fontSize: 10,
+    color:"#fff"
+  },
+ /* ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| */
+
+ /* ||||||||||||||||||||||||||||||||||||||||| GRID CARDS |||||||||||||||||||||||||||||||||||||||| */
+
   grid: {
     justifyContent:"space-between",
     flexDirection: "row",
