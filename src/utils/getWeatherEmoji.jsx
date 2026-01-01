@@ -48,7 +48,7 @@ export function getWeatherEmoji(weatherCode, timezoneOffset, options = {}) {
   const isNight = isNightWithOffset(timezoneOffset);
   const nightMode = options.forceDay ? false : isNight;
 
-  if (!weatherEmojis.hasOwnProperty(weatherCode)) return "❓";
+  if (!weatherEmojis.hasOwnProperty(weatherCode)) return "☁️";
 
   return nightMode ? weatherEmojis[weatherCode].night : weatherEmojis[weatherCode].day;
 }

@@ -251,7 +251,7 @@ export default function Home() {
         <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
         {/* HEADER */}
-        <View style={styles.containerHeader}>
+        <View>
           <View style={styles.header}>
             <View style={styles.locationBlock}>
               <View style={styles.locationRow}>
@@ -271,15 +271,15 @@ export default function Home() {
 
               {!isUsingLocation && weather?.region && weather?.country && (
                 <Text style={styles.locationSubtext}>
-                  {weather.region}{weather.country}
+                  {weather.region}
+                  {weather.country}
                 </Text>
               )}
               {isUsingLocation && (
                 <Text style={styles.locationSubtext}>Próximo a você</Text>
               )}
             </View>
-
-            <View style={styles.configApp}>
+            <View>
               <Ionicons name="settings-outline" size={20} color="#333" />
             </View>
           </View>
@@ -335,7 +335,7 @@ export default function Home() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+            <TouchableOpacity onPress={handleSearch}>
               <Ionicons name="arrow-forward" size={20} color="#333" />
             </TouchableOpacity>
           </View>
@@ -386,7 +386,7 @@ export default function Home() {
                   {/* SUGESTÕES DE BUSCA */}
                   {isLoadingSuggestions ? (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" />
+                      <ActivityIndicator size="small" color={"#666"} />
                       <Text style={styles.loadingText}>Buscando cidades...</Text>
                     </View>
                   ) : citySuggestions.length > 0 ? (
@@ -513,74 +513,70 @@ export default function Home() {
 
               {/* GRID 2x3 */}
               <View style={styles.grid}>
-                {/* UMIDADE */}
-                <View style={styles.card}>
-                  <View style={styles.cardInner}>
-                    <Ionicons name="water-outline" size={25} />
-                    <Text style={styles.cardLabel}>Umidade</Text>
-                    <Text style={styles.cardValue}>
-                      {weather.humidity ?? 0}%
-                    </Text>
-                  </View>
-                </View>
 
-                {/* SENSAÇÃO */}
-                <View style={styles.card}>
-                  <View style={styles.cardInner}>
-                    <Ionicons name="thermometer-outline" size={25} />
-                    <Text style={styles.cardLabel}>Sensação</Text>
-                    <Text style={styles.cardValue}>
-                      {Math.round(weather.apparent_temperature)}°C
-                    </Text>
-                  </View>
-                </View>
+  {/* COLUNA 1 (start) */}
+  <View style={styles.card}>
+    <View style={[styles.cardInner, styles.cardInneStart]}>
+      <Ionicons name="water-outline" size={25} />
+      <Text style={styles.cardLabel}>Umidade</Text>
+      <Text style={styles.cardValue}>{weather.humidity ?? 0}%</Text>
+    </View>
+  </View>
 
-                {/* MÁX */}
-                <View style={styles.card}>
-                  <View style={[styles.cardInner, { backgroundColor: "#a80000ff" }]}>
-                    <Ionicons name="arrow-up-outline" size={25} color="#fff" />
-                    <Text style={styles.cardLabelWhite}>Máx</Text>
-                    <Text style={styles.cardValueWhite}>
-                      {Math.round(weather.tempMax)}°C
-                    </Text>
-                  </View>
-                </View>
+  {/* COLUNA 2 (center) */}
+  <View style={styles.card}>
+    <View style={[styles.cardInner, styles.cardInneCenter]}>
+      <Ionicons name="thermometer-outline" size={25} />
+      <Text style={styles.cardLabel}>Sensação</Text>
+      <Text style={styles.cardValue}>{Math.round(weather.apparent_temperature)}°C</Text>
+    </View>
+  </View>
 
-                {/* CHUVA */}
-                <View style={styles.card}>
-                  <View style={styles.cardInner}>
-                    <Ionicons name="rainy-outline" size={25} />
-                    <Text style={styles.cardLabel}>Chuva</Text>
-                    <Text style={styles.cardValue}>
-                      {weather.precipitation_hourly !== undefined
-                        ? `${weather.precipitation_hourly} mm/h`
-                        : `${weather.precipitation ?? 0} mm`}
-                    </Text>
-                  </View>
-                </View>
+  {/* COLUNA 3 (end) — não precisa marcar */}
+  <View style={styles.card}>
+    <View style={[styles.cardInner,  styles.cardInneEnd,  { backgroundColor: "#a80000ff" }]}>
+      <Ionicons name="arrow-up-outline" size={25} color="#fff" />
+      <Text style={styles.cardLabelWhite}>Máx</Text>
+      <Text style={styles.cardValueWhite}>{Math.round(weather.tempMax)}°C</Text>
+    </View>
+  </View>
 
-                {/* VENTO */}
-                <View style={styles.card}>
-                  <View style={styles.cardInner}>
-                    <Ionicons name="leaf-outline" size={25} />
-                    <Text style={styles.cardLabel}>Vento</Text>
-                    <Text style={styles.cardValue}>
-                      {weather.windspeed} km/h
-                    </Text>
-                  </View>
-                </View>
+  {/* ---- QUEBRA AUTOMÁTICA PARA 2ª LINHA ---- */}
 
-                {/* MÍN */}
-                <View style={styles.card}>
-                  <View style={[styles.cardInner, { backgroundColor: "#001b7fff" }]}>
-                    <Ionicons name="arrow-down-outline" size={25} color="#fff" />
-                    <Text style={styles.cardLabelWhite}>Mín</Text>
-                    <Text style={styles.cardValueWhite}>
-                      {Math.round(weather.tempMin)}°C
-                    </Text>
-                  </View>
-                </View>
-              </View>
+  {/* COLUNA 1 */}
+  <View style={styles.card}>
+    <View style={[styles.cardInner, styles.cardInneStart]}>
+      <Ionicons name="rainy-outline" size={25} />
+      <Text style={styles.cardLabel}>Chuva</Text>
+      <Text style={styles.cardValue}>
+        {weather.precipitation_hourly !== undefined
+          ? `${weather.precipitation_hourly} mm/h`
+          : `${weather.precipitation ?? 0} mm`}
+      </Text>
+    </View>
+  </View>
+
+  {/* COLUNA 2 */}
+  <View style={styles.card}>
+    <View style={[styles.cardInner, styles.cardInneCenter]}>
+      <Ionicons name="leaf-outline" size={25} />
+      <Text style={styles.cardLabel}>Vento</Text>
+      <Text style={styles.cardValue}>{weather.windspeed} km/h</Text>
+    </View>
+  </View>
+
+  {/* COLUNA 3 */}
+  <View style={styles.card}>
+    <View style={[styles.cardInner, styles.cardInneEnd, { backgroundColor: "#001b7fff" }]}>
+      <Ionicons name="arrow-down-outline" size={25} color="#fff" />
+      <Text style={styles.cardLabelWhite}>Mín</Text>
+      <Text style={styles.cardValueWhite}>{Math.round(weather.tempMin)}°C</Text>
+    </View>
+  </View>
+
+</View>
+
+              
             </>
           )}
         </View>
@@ -588,14 +584,16 @@ export default function Home() {
         {/* PREVISÃO DIÁRIA */}
         {!loading && weather?.daily?.length > 0 && (
           <View style={styles.dailySection}>
-            <Text style={styles.dailyTitle}>Próximos dias</Text>
-            <View style={styles.dividerLine} />
+
+            <View style={styles.dailyTitle}>
+              <Ionicons name="calendar-outline" size={20} />
+              <Text style={styles.dailyText}>Próximos dias</Text>
+            </View>
 
             <View style={{ position: "relative" }}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.dailyList}
               >
                 {weather.daily
                   ?.filter(
@@ -642,9 +640,7 @@ export default function Home() {
                         ]}
                       >
                         <Text style={styles.dailyDay}>{label}</Text>
-                        <View style={styles.dividerLine} />
                         <Text style={{ fontSize: 25 }}>{emoji}</Text>
-                        <View style={styles.dividerLine} />
                         <Text style={styles.dailyTempMax}>
                           {isToday
                             ? Math.round(weather.tempMax)
@@ -699,9 +695,6 @@ const styles = StyleSheet.create({
   /* |||||||||||||||||||||||||||||||||||||||||||| */
   /* |||||||||||||||||| HEADER |||||||||||||||||| */
 
-  containerHeader:{
-  },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -709,12 +702,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
 
-  locationBlock:{
-  },
-
   locationRow: {
     flexDirection: "row",
-    gap: 5,
+    gap: 10,
   },
 
   locationText: {
@@ -723,11 +713,9 @@ const styles = StyleSheet.create({
   },
 
   locationSubtext: {
+    fontSize: 12,
     color: "#777",
-    marginStart: 25,
-  },
-  
-  configApp:{
+    marginStart: 30,
   },
 
    /* |||||||||||||||||||||||||||||||||||||||||||| */
@@ -749,10 +737,6 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-  },
-
-  searchButton: {
-
   },
 
    /* |||||||||||||||||||||||||||||||||||||||||||| */
@@ -784,17 +768,16 @@ const styles = StyleSheet.create({
   suggestionItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent:"center",
+    justifyContent: "center",
     borderBottomWidth: 1,
-    padding: 10,
-    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 15,
+    gap: 10,
     borderBottomColor: "#f0f0f0",
   },
-
-  suggestionTextContainer: {
+    suggestionTextContainer: {
     flex: 1,
   },
-
   suggestionName: {
     fontSize: 14,
     fontWeight: "600",
@@ -807,6 +790,8 @@ const styles = StyleSheet.create({
   },
 
   /* |||||||||||||||||||||||||||||||||||||||||||| */
+   /* |||||||||||||| OVERLAY-LOADING |||||||||||| */
+
 
   loadingContainer: {
     padding: 40,
@@ -841,14 +826,16 @@ const styles = StyleSheet.create({
     color: "#999",
   },
 
-  /* ||||||||||||||||||| MAIN ||||||||||||||||||| */
   /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* ||||||||||||||||||| MAIN ||||||||||||||||||| */
 
   main: {
     flex: 1,
   },
 
-   /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* ||||||||||||||||| MAIN-CARD |||||||||||||||| */
+
 
   mainCard: {
     flexDirection: "row",
@@ -904,33 +891,48 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-   /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* |||||||||||||||| CARDS-GRID |||||||||||||||| */
 
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginHorizontal: 20,
-    justifyContent: "space-between",
+    paddingVertical: 20,
+    rowGap: 20, // ← GAP APENAS ENTRE AS LINHAS
   },
 
   card: {
-    width: "33.333%",
-    alignItems: "center",
-    marginTop: 20,
+    width: "33.333%", // força 3 colunas
   },
 
   cardInner: {
     width: 80,
     backgroundColor: "#fff",
-    borderRadius: 20,
-    elevation: 2,
     alignItems: "center",
-    paddingVertical: 8,
+    margintop: 10,
+    paddingVertical: 10,
+    borderRadius: 15,
+    elevation: 2,
+
+
+  },
+  // simula alinhamento por coluna VISUAL
+  cardInneStart: {
+    alignSelf: "flex-start", // 1ª coluna fica na esquerda
+  },
+
+  cardInneCenter: {
+    alignSelf: "center", // 2ª coluna fica no meio
+  },
+
+  cardInneEnd: {
+    alignSelf: "flex-end", // 3ª coluna fica na direita
   },
 
   cardLabel: {
-    fontSize: 12,
-    color: "#777",
+      fontSize: 12,
+      color: "#777",
   },
 
   cardValue: {
@@ -952,43 +954,43 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-   /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* ||||||||||||||| NEXT FEW DAYS |||||||||||||| */
 
   dailySection: {
-    backgroundColor: "white",
     margin: 20,
     borderRadius: 20,
+    backgroundColor:"#fff",
     elevation: 2,
   },
 
   dailyTitle: {
-    fontSize: 15,
-    fontWeight: "800",
+    flexDirection: "row",
     color: "#333",
-    textAlign: "center",
-    padding: 10,
-  },
+    paddingHorizontal: 10,
+    paddingVertical: 15,
+    gap: 10,
 
-  dailyList: {
-    paddingEnd: 10,
-    paddingBottom: 20,
+  },
+  dailyText:{
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
+    
   },
 
   dailyCard: {
-    width: 60,
-    borderRadius: 20,
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginStart: 10,
-    paddingTop: 10,
-    paddingBottom: 30,
+    justifyContent:"center",
+    alignItems:"center",
+    paddingBottom: 20,
+    paddingStart: 15,
+
   },
 
   dailyDay: {
     fontSize: 12,
     fontWeight: "700",
     color: "#333",
-    textTransform: "capitalize",
   },
 
   dailyTempMax: {
@@ -1001,17 +1003,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800",
     color: "#999",
+
   },
 
   dividerLine: {
-    marginHorizontal: 20,
-    height: 1.25,
-    backgroundColor: "#99999970",
-    marginVertical: 2,
-    borderRadius: 10,
   },
-
-  dailyCardActive: {},
 });
 
  /* |||||||||||||||||||||||||||||||||||||||||||| */
