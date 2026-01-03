@@ -10,6 +10,7 @@ import {
   Animated,
   ActivityIndicator,
   StatusBar,
+  Linking
 } from "react-native";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,7 +34,7 @@ const statusBarHeight = Constants.statusBarHeight;
 // ========================= COMPONENT =========================
 export default function Home() {
   // ========================= HOOKS DE ESTADO =========================
-  const { status, locationLabel } = useLocation();
+  const { status, locationLabel, requestPermission} = useLocation();
   const [city, setCity] = useState("");
   const [citySuggestions, setCitySuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -88,6 +89,9 @@ export default function Home() {
   const isSearchActive = isInputFocused || hasSuggestions;
   const displayCity = searchedCity || locationLabel;
   const isUsingLocation = !searchedCity;
+
+  const hasLocationPermission = status === LOCATION_STATUS.GRANTED;
+
 
   const locationContextText = isUsingLocation
     ? "📍 Próximo a você"
@@ -256,11 +260,30 @@ export default function Home() {
             <View style={styles.locationBlock}>
               <View style={styles.locationRow}>
                 <Ionicons
-                  name={isUsingLocation ? "location-sharp" : "map-outline"}
+                    name={!hasLocationPermission && !searchedCity ? "globe-outline" : "location-sharp"}
                   size={20}
                   color="#333"
                 />
-                <Text style={styles.locationText}>{displayCity}</Text>
+                <TouchableOpacity
+                  onPress={
+                    status === LOCATION_STATUS.GRANTED
+                      ? fetchWeatherByCoords
+                      : () => Linking.openSettings()
+                  }
+                  disabled={status === LOCATION_STATUS.LOADING}
+                >
+                  <Text style={styles.locationText}>
+                    {status === LOCATION_STATUS.LOADING
+                      ? "Buscando local…"
+                      : searchedCity
+                      ? searchedCity  // ← se pesquisou cidade, mostra ela SEMPRE
+                      : status === LOCATION_STATUS.GRANTED
+                      ? displayCity   // localização atual
+                      : "Ativar localização"} 
+                  </Text>
+                </TouchableOpacity>
+
+               
 
                 {searchedCity && (
                   <TouchableOpacity onPress={handleClearSearch}>
@@ -435,7 +458,8 @@ export default function Home() {
         <View style={styles.main}>
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" style={{ transform: [{ scale: 2 }] }} />
+              <ActivityIndicator size="large" style={{ transform: [{ scale: 1.2 }] }} color={"#666"} />
+              <Text style={styles.loadingOverlayText}>Carregando Clima...</Text>
             </View>
           )}
 
@@ -582,12 +606,12 @@ export default function Home() {
         </View>
 
         {/* PREVISÃO DIÁRIA */}
-        {!loading && weather?.daily?.length > 0 && (
+        {!loading && !error && weather?.daily?.length > 0 && (
           <View style={styles.dailySection}>
 
             <View style={styles.dailyTitle}>
               <Ionicons name="calendar-outline" size={20} />
-              <Text style={styles.dailyText}>Próximos dias</Text>
+              <Text style={styles.dailyText}>Próximos dias</Text> 
             </View>
 
             <View style={{ position: "relative" }}>
@@ -704,7 +728,7 @@ const styles = StyleSheet.create({
 
   locationRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 10,    
   },
 
   locationText: {
@@ -747,6 +771,16 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
   },
+  loadingOverlay:{
+     ...StyleSheet.absoluteFillObject, // ocupa a tela toda
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 20,
+    zIndex: 2000,
+  },
+   loadingOverlayText:{
+    color: "#666",
+   },
 
   overlayContent: {
     zIndex: 1001,
@@ -790,7 +824,7 @@ const styles = StyleSheet.create({
   },
 
   /* |||||||||||||||||||||||||||||||||||||||||||| */
-   /* |||||||||||||| OVERLAY-LOADING |||||||||||| */
+  /* |||||||||||||| OVERLAY-LOADING ||||||||||||| */
 
 
   loadingContainer: {
@@ -825,6 +859,55 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: "#999",
   },
+
+  /* |||||||||||||||||||||||||||||||||||||||||||| */
+  /* ||||||||||||||||| CARD-ERRO |||||||||||||||| */
+
+  errorWrapper: {
+  flex: 1,
+  justifyContent: "center",
+  marginHorizontal: 20,
+},
+
+errorCard: {
+  borderRadius: 20,
+  padding: 30,
+  backgroundColor: "#fff",
+  elevation: 2,
+  alignItems: "center",
+  gap: 12,
+},
+
+errorTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  color: "#222",
+  textAlign: "center",
+},
+
+errorText: {
+  fontSize: 14,
+  fontWeight: "500",
+  color: "#555",
+  textAlign: "center",
+  lineHeight: 20,
+},
+
+retryButton: {
+  marginTop: 6,
+  backgroundColor: "#222",
+  paddingHorizontal: 18,
+  paddingVertical: 10,
+  borderRadius: 10,
+  elevation: 2,
+},
+
+retryText: {
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#fff",
+  textAlign: "center",
+},
 
   /* |||||||||||||||||||||||||||||||||||||||||||| */
   /* ||||||||||||||||||| MAIN ||||||||||||||||||| */
@@ -912,7 +995,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margintop: 10,
     paddingVertical: 10,
-    borderRadius: 15,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 30,
     elevation: 2,
 
 
@@ -969,13 +1055,18 @@ const styles = StyleSheet.create({
     color: "#333",
     paddingHorizontal: 10,
     paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
     gap: 10,
+    
+  
 
   },
   dailyText:{
-    flex: 1,
     fontSize: 15,
     fontWeight: "600",
+    textAlign: "center",
+
     
   },
 
@@ -983,7 +1074,8 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     alignItems:"center",
     paddingBottom: 20,
-    paddingStart: 15,
+    paddingInline: 18,
+    
 
   },
 
@@ -1006,8 +1098,11 @@ const styles = StyleSheet.create({
 
   },
 
-  dividerLine: {
-  },
+    
+
+    
+  
 });
 
  /* |||||||||||||||||||||||||||||||||||||||||||| */
+
