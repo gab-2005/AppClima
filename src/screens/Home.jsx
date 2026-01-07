@@ -28,6 +28,22 @@ import {
   getDayNightEmoji,
 } from "../utils/getWeatherEmoji";
 
+
+//========================== COMPONENTS ========================
+
+import { HeaderLocation } from "../components/HeaderLocation";
+import { SearchBox } from "../components/SearchBox";
+import { SearchOverlay } from "../components/SearchOverlay";
+import { MainWeatherCard } from "../components/MainWeatherCard";
+import { WeatherGrid } from "../components/WeatherGrid";
+import { DailyForecast } from "../components/DailyForecast";
+import { WeatherLoading } from "../components/WeatherLoading";
+import { WeatherError } from "../components/WeatherError";
+
+
+
+
+
 // ========================= CONSTANTS =========================
 const statusBarHeight = Constants.statusBarHeight;
 
@@ -254,451 +270,101 @@ export default function Home() {
         {/* STATUS BAR */}
         <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-        {/* HEADER */}
+       
         <View>
-          <View style={styles.header}>
-            <View style={styles.locationBlock}>
-              <View style={styles.locationRow}>
-                <Ionicons
-                    name={!hasLocationPermission && !searchedCity ? "globe-outline" : "location-sharp"}
-                  size={20}
-                  color="#333"
-                />
-                <TouchableOpacity
-                  onPress={
-                    status === LOCATION_STATUS.GRANTED
-                      ? fetchWeatherByCoords
-                      : () => Linking.openSettings()
-                  }
-                  disabled={status === LOCATION_STATUS.LOADING}
-                >
-                  <Text style={styles.locationText}>
-                    {status === LOCATION_STATUS.LOADING
-                      ? "Buscando local…"
-                      : searchedCity
-                      ? searchedCity  // ← se pesquisou cidade, mostra ela SEMPRE
-                      : status === LOCATION_STATUS.GRANTED
-                      ? displayCity   // localização atual
-                      : "Ativar localização"} 
-                  </Text>
-                </TouchableOpacity>
-
-               
-
-                {searchedCity && (
-                  <TouchableOpacity onPress={handleClearSearch}>
-                    <Ionicons name="close-circle" size={20} color="#666" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {!isUsingLocation && weather?.region && weather?.country && (
-                <Text style={styles.locationSubtext}>
-                  {weather.region}
-                  {weather.country}
-                </Text>
-              )}
-              {isUsingLocation && (
-                <Text style={styles.locationSubtext}>Próximo a você</Text>
-              )}
-            </View>
-            <View>
-              <Ionicons name="settings-outline" size={20} color="#333" />
-            </View>
-          </View>
+        
+        {/* HEADER */}
+          <HeaderLocation
+            status={status}
+            searchedCity={searchedCity}
+            locationLabel={locationLabel}
+            weather={weather}
+            onRefreshLocation={
+              status === LOCATION_STATUS.GRANTED
+                ? fetchWeatherByCoords
+                : () => Linking.openSettings()
+            }
+            onClearSearch={handleClearSearch}
+          />
 
           {/* INPUT DE PESQUISA */}
-          <View
-            style={styles.searchBox}
-            onLayout={(event) => {
-              const { x, y, width, height } = event.nativeEvent.layout;
-              setSearchBoxLayout({ x, y, width, height });
+          <SearchBox
+            city={city}
+            inputRef={inputRef}
+            onChangeCity={handleCityChange}
+            onSearch={handleSearch}
+            onFocus={() => {
+              if (blurTimeout.current) {
+                clearTimeout(blurTimeout.current);
+                blurTimeout.current = null;
+              }
+              setTimeout(() => setIsInputFocused(true), 50);
             }}
-          >
-            <Ionicons name="search" size={20} color="#666" />
-
-            <TextInput
-              ref={inputRef}
-              placeholder="Buscar cidade..."
-              style={styles.input}
-              value={city}
-              onChangeText={handleCityChange}
-              onFocus={() => {
-                if (blurTimeout.current) {
-                  clearTimeout(blurTimeout.current);
-                  blurTimeout.current = null;
+            onBlur={() => {
+              blurTimeout.current = setTimeout(() => {
+                if (
+                  citySuggestions.length === 0 &&
+                  !isLoadingSuggestions &&
+                  !showEmptyState
+                ) {
+                  setIsInputFocused(false);
                 }
-                setTimeout(() => setIsInputFocused(true), 50);
-              }}
-              onBlur={() => {
-                blurTimeout.current = setTimeout(() => {
-                  if (
-                    citySuggestions.length === 0 &&
-                    !isLoadingSuggestions &&
-                    !showEmptyState
-                  ) {
-                    setIsInputFocused(false);
-                  }
-                  blurTimeout.current = null;
-                }, 200);
-              }}
-              blurOnSubmit={false}
-            />
-
-            {city.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  setCity("");
-                  setCitySuggestions([]);
-                  setIsLoadingSuggestions(false);
-                  setShowEmptyState(false);
-                }}
-              >
-                <Ionicons name="close-circle" size={20} color="#666" />
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity onPress={handleSearch}>
-              <Ionicons name="arrow-forward" size={20} color="#333" />
-            </TouchableOpacity>
-          </View>
+                blurTimeout.current = null;
+              }, 200);
+            }}
+          />
         </View>
 
         {/* OVERLAY DE BUSCA */}
-        {isSearchActive && (
-          <Animated.View style={[styles.overlayWrapper, { opacity: overlayOpacity }]}>
-            <BlurView intensity={85} tint="dark" style={StyleSheet.absoluteFill} />
-            <Pressable style={StyleSheet.absoluteFill} onPress={handleCloseOverlay} />
-
-            {(citySuggestions.length > 0 ||
-              isLoadingSuggestions ||
-              showEmptyState ||
-              showRecentCities) && (
-              <Animated.View
-                style={[
-                  styles.overlayContent,
-                  { transform: [{ scale: suggestionsScale }] },
-                ]}
-              >
-                <View style={styles.suggestionsContainer}>
-                  {/* RECENT CITIES */}
-                  {showRecentCities && (
-                    <ScrollView
-                      style={styles.suggestionsList}
-                      keyboardShouldPersistTaps="handled"
-                      showsVerticalScrollIndicator={false}
-                    >
-                      {recentCities.map((item, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.suggestionItem}
-                          onPress={() => handleSelectSuggestion(item)}
-                        >
-                          <Ionicons name="time-outline" size={20} color="#666" />
-                          <View style={styles.suggestionTextContainer}>
-                            <Text style={styles.suggestionName}>{item.name}</Text>
-                            <Text style={styles.suggestionRegion}>
-                              {item.admin1}, {item.country}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  )}
-
-                  {/* SUGESTÕES DE BUSCA */}
-                  {isLoadingSuggestions ? (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color={"#666"} />
-                      <Text style={styles.loadingText}>Buscando cidades...</Text>
-                    </View>
-                  ) : citySuggestions.length > 0 ? (
-                    <ScrollView
-                      style={styles.suggestionsList}
-                      keyboardShouldPersistTaps="handled"
-                      showsVerticalScrollIndicator={false}
-                    >
-                      {citySuggestions.map((suggestion, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.suggestionItem}
-                          onPress={() => handleSelectSuggestion(suggestion)}
-                        >
-                          <Ionicons name="location-outline" size={20} />
-                          <View style={styles.suggestionTextContainer}>
-                            <Text style={styles.suggestionName}>
-                              {suggestion.name}
-                            </Text>
-                            {suggestion.admin1 && (
-                              <Text style={styles.suggestionRegion}>
-                                {suggestion.admin1}, {suggestion.country}
-                              </Text>
-                            )}
-                          </View>
-                          <Ionicons name="chevron-forward" size={20} color="#ccc" />
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  ) : showEmptyState ? (
-                    <View style={styles.emptyContainer}>
-                      <Ionicons name="search-outline" size={20} color="#ccc" />
-                      <Text style={styles.emptyText}>Nenhuma cidade encontrada</Text>
-                      <Text style={styles.emptySubtext}>
-                        Tente buscar com outro nome
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              </Animated.View>
-            )}
-          </Animated.View>
-        )}
+        
+        <SearchOverlay
+          isVisible={isSearchActive}
+          overlayOpacity={overlayOpacity}
+          suggestionsScale={suggestionsScale}
+          citySuggestions={citySuggestions}
+          recentCities={recentCities}
+          isLoading={isLoadingSuggestions}
+          showEmptyState={showEmptyState}
+          showRecentCities={showRecentCities}
+          onSelectSuggestion={handleSelectSuggestion}
+          onClose={handleCloseOverlay}
+        />
 
         {/* CLIMA PRINCIPAL */}
         <View style={styles.main}>
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" style={{ transform: [{ scale: 1.2 }] }} color={"#666"} />
-              <Text style={styles.loadingOverlayText}>Carregando Clima...</Text>
-            </View>
-          )}
-
-          {!loading && error && (
-            <View style={styles.errorWrapper}>
-              <View style={styles.errorCard}>
-                <Ionicons name="warning-outline" size={28} color="#c0392b" />
-                <Text style={styles.errorTitle}>Erro ao carregar clima</Text>
-                <Text style={styles.errorText}>{error}</Text>
-
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={() =>
-                    searchedCity
-                      ? fetchWeatherByCity(searchedCity)
-                      : fetchWeatherByCoords()
-                  }
-                >
-                  <Text style={styles.retryText}>Tentar novamente</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
+          {loading && <WeatherLoading />}
+            {!loading && error && (
+              <WeatherError
+                message={error}
+                onRetry={() =>
+                  searchedCity
+                    ? fetchWeatherByCity(searchedCity)
+                    : fetchWeatherByCoords()
+                }
+              />
+            )}
           {!loading && !error && weather && (
             <>
               {/* MAIN CARD */}
-              <LinearGradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                colors={
-                  isNight
-                    ? ["#0f0c29", "#2b3663ff"]
-                    : ["#3a7bd5", "#00d2ff"]
-                }
-                style={styles.mainCard}
-              >
-                <View style={styles.mainCardEmoji}>
-                  <Text style={{ fontSize: 125 }}>
-                    {getWeatherEmoji(
-                      weather.daily[0].weathercode,
-                      weather?.timezone_offset
-                    )}
-                  </Text>
-                </View>
 
-                <View style={styles.mainCardInfo}>
-                  <Text style={styles.weekday}>
-                    {new Date().toLocaleDateString("pt-BR", { weekday: "long" })}
-                  </Text>
-                  <Text style={styles.dayMonth}>
-                    {new Date().toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "long",
-                    })}
-                  </Text>
-                  <Text style={styles.tempText}>
-                    {Math.round(weather.temperature)}°C
-                  </Text>
-
-                  <View style={styles.weatherDescription}>
-                    <Ionicons
-                      style={styles.DescriptionEmoiji}
-                      name={getDayNightEmoji(weather?.timezone_offset)}
-                    />
-                    <Text style={styles.DescriptionText}>
-                      {getWeatherDescription(
-                        weather.daily[0].weathercode,
-                        weather?.timezone_offset
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              </LinearGradient>
+              <MainWeatherCard
+                weather={weather}
+                isNight={isNight}
+              />
 
               {/* GRID 2x3 */}
-              <View style={styles.grid}>
-
-  {/* COLUNA 1 (start) */}
-  <View style={styles.card}>
-    <View style={[styles.cardInner, styles.cardInneStart]}>
-      <Ionicons name="water-outline" size={25} />
-      <Text style={styles.cardLabel}>Umidade</Text>
-      <Text style={styles.cardValue}>{weather.humidity ?? 0}%</Text>
-    </View>
-  </View>
-
-  {/* COLUNA 2 (center) */}
-  <View style={styles.card}>
-    <View style={[styles.cardInner, styles.cardInneCenter]}>
-      <Ionicons name="thermometer-outline" size={25} />
-      <Text style={styles.cardLabel}>Sensação</Text>
-      <Text style={styles.cardValue}>{Math.round(weather.apparent_temperature)}°C</Text>
-    </View>
-  </View>
-
-  {/* COLUNA 3 (end) — não precisa marcar */}
-  <View style={styles.card}>
-    <View style={[styles.cardInner,  styles.cardInneEnd,  { backgroundColor: "#a80000ff" }]}>
-      <Ionicons name="arrow-up-outline" size={25} color="#fff" />
-      <Text style={styles.cardLabelWhite}>Máx</Text>
-      <Text style={styles.cardValueWhite}>{Math.round(weather.tempMax)}°C</Text>
-    </View>
-  </View>
-
-  {/* ---- QUEBRA AUTOMÁTICA PARA 2ª LINHA ---- */}
-
-  {/* COLUNA 1 */}
-  <View style={styles.card}>
-    <View style={[styles.cardInner, styles.cardInneStart]}>
-      <Ionicons name="rainy-outline" size={25} />
-      <Text style={styles.cardLabel}>Chuva</Text>
-      <Text style={styles.cardValue}>
-        {weather.precipitation_hourly !== undefined
-          ? `${weather.precipitation_hourly} mm/h`
-          : `${weather.precipitation ?? 0} mm`}
-      </Text>
-    </View>
-  </View>
-
-  {/* COLUNA 2 */}
-  <View style={styles.card}>
-    <View style={[styles.cardInner, styles.cardInneCenter]}>
-      <Ionicons name="leaf-outline" size={25} />
-      <Text style={styles.cardLabel}>Vento</Text>
-      <Text style={styles.cardValue}>{weather.windspeed} km/h</Text>
-    </View>
-  </View>
-
-  {/* COLUNA 3 */}
-  <View style={styles.card}>
-    <View style={[styles.cardInner, styles.cardInneEnd, { backgroundColor: "#001b7fff" }]}>
-      <Ionicons name="arrow-down-outline" size={25} color="#fff" />
-      <Text style={styles.cardLabelWhite}>Mín</Text>
-      <Text style={styles.cardValueWhite}>{Math.round(weather.tempMin)}°C</Text>
-    </View>
-  </View>
-
-</View>
-
-              
+              <WeatherGrid weather={weather} />
             </>
           )}
         </View>
 
         {/* PREVISÃO DIÁRIA */}
         {!loading && !error && weather?.daily?.length > 0 && (
-          <View style={styles.dailySection}>
-
-            <View style={styles.dailyTitle}>
-              <Ionicons name="calendar-outline" size={20} />
-              <Text style={styles.dailyText}>Próximos dias</Text> 
-            </View>
-
-            <View style={{ position: "relative" }}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              >
-                {weather.daily
-                  ?.filter(
-                    (d) =>
-                      new Date(d.date).setHours(0, 0, 0, 0) >=
-                      new Date().setHours(0, 0, 0, 0)
-                  )
-                  .map((item, i) => {
-                    const date = new Date(item.date);
-                    const today = new Date();
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(today.getDate() + 1);
-                    tomorrow.setHours(0, 0, 0, 0);
-
-                    const d1 = new Date(item.date).setHours(0, 0, 0, 0);
-                    const d2 = today.setHours(0, 0, 0, 0);
-
-                    const isToday = d1 === d2;
-
-                    const label = isToday
-                      ? "Hoje"
-                      : d1 === tomorrow.getTime()
-                      ? "Amanhã"
-                      : new Date(item.date).toLocaleDateString("pt-BR", {
-                          weekday: "short",
-                        });
-
-                    const emoji = isToday
-                      ? getWeatherEmoji(
-                          weather.daily[0].weathercode,
-                          weather?.timezone_offset
-                        )
-                      : getWeatherEmoji(item.weathercode, weather?.timezone_offset, {
-                          forceDay: true,
-                        });
-
-                    return (
-                      <Pressable
-                        key={i}
-                        onPress={() => handleSelectDay(item, i)}
-                        style={[
-                          styles.dailyCard,
-                          i === activeDayIndex && styles.dailyCardActive,
-                        ]}
-                      >
-                        <Text style={styles.dailyDay}>{label}</Text>
-                        <Text style={{ fontSize: 25 }}>{emoji}</Text>
-                        <Text style={styles.dailyTempMax}>
-                          {isToday
-                            ? Math.round(weather.tempMax)
-                            : Math.round(item.tempMax)}
-                          °
-                        </Text>
-                        <Text style={styles.dailyTempMin}>
-                          {isToday
-                            ? Math.round(weather.tempMin)
-                            : Math.round(item.tempMin)}
-                          °
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-              </ScrollView>
-
-              {/* GRADIENTES LATERAIS */}
-              <LinearGradient
-                colors={["#fff", "#fff", "transparent"]}
-                start={{ x: 1, y: 0 }}
-                end={{ x: 0, y: 0 }}
-                style={{ position: "absolute", right: 0, top: 0, bottom: 20, width: 20 }}
-                pointerEvents="none"
-              />
-              <LinearGradient
-                colors={["#fff", "#fff", "transparent"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{ position: "absolute", left: 0, top: 0, bottom: 20, width: 20 }}
-                pointerEvents="none"
-              />
-            </View>
-          </View>
+          <DailyForecast
+            weather={weather}
+            activeDayIndex={activeDayIndex}
+            onSelectDay={handleSelectDay}
+          />
         )}
       </>
     </View>
