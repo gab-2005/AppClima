@@ -6,19 +6,24 @@ import {
   getDayNightEmoji,
 } from "../utils/getWeatherEmoji";
 import { getWeatherDescription } from "../utils/getWeatherDescription";
+import { convertTemperature } from "../utils/temperature";
 
-export function MainWeatherCard({ weather, isNight }) {
-  if (!weather) return null;
+
+export function MainWeatherCard({ weather, isNight, unit}) {
+    if (!weather) return null;
+
+  // temperatura atual (corrigido para usar o valor da API)
+  const currentTemp = weather?.temperature ?? 0;
+  const temp = convertTemperature(currentTemp, unit);
+
+
+
 
   return (
     <LinearGradient
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      colors={
-        isNight
-          ? ["#0f0c29", "#2b3663ff"]
-          : ["#3a7bd5", "#00d2ff"]
-      }
+      start={{ x: 0, y: 1 }}
+      end={{ x: 0, y: 0 }}
+      colors={["#000000ff", "#000000b9"]}
       style={{
         flexDirection: "row",
         justifyContent: "center",
@@ -49,7 +54,10 @@ export function MainWeatherCard({ weather, isNight }) {
         </Text>
 
         <Text style={{ fontSize: 40, color: "#fff" }}>
-          {Math.round(weather.temperature)}°C
+          <Text style={{ fontSize: 40, color: "#fff" }}>
+          {temp !== undefined ? Math.round(temp) : "--"}°{unit === "celsius" ? "C" : "F"}
+        </Text>
+
         </Text>
 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>

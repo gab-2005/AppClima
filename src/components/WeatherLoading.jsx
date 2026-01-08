@@ -18,8 +18,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    gap: 20,
-    zIndex: 2000,
+    gap: 20
   },
 
   loadingText: {

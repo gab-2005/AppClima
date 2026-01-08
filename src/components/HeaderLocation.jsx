@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LOCATION_STATUS } from "../hooks/useLocation";
 
@@ -9,6 +9,7 @@ export function HeaderLocation({
   weather,
   onRefreshLocation,
   onClearSearch,
+  onOpenSettings,
 }) {
   const hasLocationPermission = status === LOCATION_STATUS.GRANTED;
   const isUsingLocation = !searchedCity;
@@ -55,9 +56,14 @@ export function HeaderLocation({
             </Text>
           )}
         </View>
-
-        <Ionicons name="settings-outline" size={20} color="#333" />
+        {/* SETTINGS ICON */}
+        <TouchableOpacity onPress={onOpenSettings}>
+          <Ionicons name="settings-outline" size={20} />
+        </TouchableOpacity> 
       </View>
     </View>
   );
 }
+
+
+
