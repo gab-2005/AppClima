@@ -1,5 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
+
 // ========================= NIGHT CHECK =========================
+/**
+ * isNightWithOffset
+ *
+ * Papel da função:
+ * - Determina se é noite em uma cidade com base no offset de timezone
+ *
+ * Parâmetros:
+ * - offsetInSeconds: número (offset da cidade em segundos)
+ *
+ * Retorno:
+ * - boolean: true se for noite (18h–6h), false se for dia
+ */
 export function isNightWithOffset(offsetInSeconds) {
   const offset = typeof offsetInSeconds === "number" ? offsetInSeconds : 0;
 
@@ -11,22 +24,41 @@ export function isNightWithOffset(offsetInSeconds) {
   return hour >= 18 || hour < 6;
 }
 
+/**
+ * getDayNightEmoji
+ *
+ * Papel da função:
+ * - Retorna o ícone do dia ou noite para usar no app
+ *
+ * Parâmetros:
+ * - timezoneOffset: número (offset da cidade em segundos)
+ *
+ * Retorno:
+ * - string: nome do ícone do Ionicons ("sunny-outline" ou "moon-outline")
+ */
 export function getDayNightEmoji(timezoneOffset) {
   const isNight = isNightWithOffset(timezoneOffset);
   return isNight ? "moon-outline" : "sunny-outline"; // Lua à noite, Sol de dia
 }
 
 // ========================= WEATHER EMOJI =========================
+/**
+ * weatherEmojis
+ *
+ * Papel:
+ * - Mapeia códigos de clima para emojis unicode
+ * - Suporta variação dia/noite
+ */
 const weatherEmojis = {
-  0: { day: "☀️", night: "🌕" },       // Céu limpo
-  1: { day: "☀️", night: "🌕" },       // Principalmente limpo
+  0: { day: "☀️", night: "🌙" },       // Céu limpo
+  1: { day: "☀️", night: "🌙" },       // Principalmente limpo
   2: { day: "🌤️", night: "🌙" },       // Poucas nuvens
   3: { day: "☁️", night: "☁️" },       // Parcialmente nublado
   45: { day: "🌫️", night: "🌫️" },     // Névoa
   48: { day: "🌫️", night: "🌫️" },     // Névoa com gelo
-  51: { day: "🌦️", night: "☁️" },     // Chuva fraca (garoa)
-  53: { day: "🌦️", night: "🌧️" },     // Chuva moderada (garoa)
-  55: { day: "🌦️", night: "🌧️" },     // Chuva intensa (garoa)
+  51: { day: "🌦️", night: "☁️" },     // Chuva fraca
+  53: { day: "🌦️", night: "🌧️" },     // Chuva moderada
+  55: { day: "🌦️", night: "🌧️" },     // Chuva intensa
   61: { day: "🌦️", night: "☁️" },     // Chuva leve
   63: { day: "🌦️", night: "🌧️" },     // Chuva moderada
   65: { day: "🌦️", night: "🌧️" },     // Chuva forte
@@ -44,11 +76,27 @@ const weatherEmojis = {
   99: { day: "⛈️", night: "⛈️" }      // Tempestade intensa
 };
 
+/**
+ * getWeatherEmoji
+ *
+ * Papel da função:
+ * - Retorna o emoji apropriado para o clima, considerando dia/noite
+ *
+ * Parâmetros:
+ * - weatherCode: número (código do clima retornado pela API)
+ * - timezoneOffset: número (offset da cidade em segundos)
+ * - options: { forceDay?: boolean } => força modo dia mesmo se for noite
+ *
+ * Retorno:
+ * - string: emoji unicode correspondente
+ */
 export function getWeatherEmoji(weatherCode, timezoneOffset, options = {}) {
   const isNight = isNightWithOffset(timezoneOffset);
   const nightMode = options.forceDay ? false : isNight;
 
-  if (!weatherEmojis.hasOwnProperty(weatherCode)) return "☁️";
+  if (!weatherEmojis.hasOwnProperty(weatherCode)) return "☁️"; // default
 
-  return nightMode ? weatherEmojis[weatherCode].night : weatherEmojis[weatherCode].day;
+  return nightMode
+    ? weatherEmojis[weatherCode].night
+    : weatherEmojis[weatherCode].day;
 }

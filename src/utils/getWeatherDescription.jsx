@@ -2,6 +2,10 @@ import { isNightWithOffset } from "./getWeatherEmoji";
 
 
 // ========================= WEATHER DESCRIPTION =========================
+// Mapeamento de códigos do tempo para descrição textual
+// day  -> descrição durante o dia
+// night -> descrição durante a noite
+
 const weatherDescriptions = {
   0: { day: "Céu limpo", night: "Céu limpo" },
   1: { day: "Principalmente limpo", night: "Principalmente limpo" },
@@ -29,14 +33,37 @@ const weatherDescriptions = {
   99: { day: "Tempestade intensa", night: "Tempestade intensa" },
 };
 
+// ========================= FUNÇÃO PRINCIPAL =========================
+/**
+ * getWeatherDescription
+ *
+ * Papel da função:
+ * - Recebe o código do clima e retorna a descrição textual apropriada
+ * - Considera se é dia ou noite usando timezoneOffset
+ * - Permite forçar modo dia com options.forceDay
+ *
+ * Uso com Home / componentes:
+ * - MainWeatherCard, DailyForecast, WeatherGrid chamam para mostrar descrição
+ *
+ * Parâmetros:
+ * - weatherCode: número (código do clima retornado pela API)
+ * - timezoneOffset: número (offset de timezone da API)
+ * - options: objeto { forceDay?: boolean }
+ *
+ * Retorno:
+ * - string: descrição do clima ("Céu limpo", "Chuva fraca", etc.)
+ */
 export function getWeatherDescription(weatherCode, timezoneOffset, options = {}) {
+  // Determina se é noite ou dia com base no timezone
   const isNight = isNightWithOffset(timezoneOffset);
+
+  // Se options.forceDay = true, ignora o cálculo de noite
   const nightMode = options.forceDay ? false : isNight;
 
+  // Se o código não estiver no mapa, retorna "Desconhecido"
   if (!weatherDescriptions.hasOwnProperty(weatherCode)) return "Desconhecido";
 
-  return nightMode ? weatherDescriptions[weatherCode].night : weatherDescriptions[weatherCode].day;
+  return nightMode
+    ? weatherDescriptions[weatherCode].night
+    : weatherDescriptions[weatherCode].day;
 }
-
-
-

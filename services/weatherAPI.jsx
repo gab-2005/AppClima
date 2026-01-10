@@ -1,21 +1,26 @@
+// ========================= HELPERS INTERNOS =========================
+
+// Arredonda número `v` com casas decimais (`dec`), padrão 1
 const round = (v, dec = 1) => Math.round(v * 10 ** dec) / 10;
 
+// Retorna o índice da hora atual no array de horas da API, considerando timezoneOffset
 function findCurrentHourIndex(hourlyTimes, timezoneOffset = 0) {
   const now = new Date();
   const localTime = new Date(now.getTime() + timezoneOffset * 1000);
+
   for (let i = 0; i < hourlyTimes.length; i++) {
     if (new Date(hourlyTimes[i]) >= localTime) return Math.max(0, i - 1);
   }
+
   return Math.max(0, hourlyTimes.length - 1);
 }
 
+// ========================= FUNÇÃO PRINCIPAL: GET WEATHER BY COORDS =========================
 export async function getWeatherByCoords(lat, lon) {
   try {
     const res = await fetch(
-  `https://api.open-meteo.com/v1/forecast?forecast_days=15&latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,apparent_temperature,relativehumidity_2m,precipitation,dewpoint_2m,pressure_msl&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=auto&temperature_unit=celsius&windspeed_unit=kmh&precipitation_unit=mm`
-);
-
-  
+      `https://api.open-meteo.com/v1/forecast?forecast_days=15&latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,apparent_temperature,relativehumidity_2m,precipitation,dewpoint_2m,pressure_msl&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=auto&temperature_unit=celsius&windspeed_unit=kmh&precipitation_unit=mm`
+    );
 
     if (!res.ok) throw new Error("Erro na API");
 
@@ -28,44 +33,37 @@ export async function getWeatherByCoords(lat, lon) {
     const idx = findCurrentHourIndex(data.hourly.time, tzOffset);
     const get = (arr) => arr?.[idx] ?? 0;
 
-    // Previsão diária com weathercode correto
+    // Previsão diária completa com weathercode
     const dailyForecast = data.daily.time.map((date, index) => ({
-  date,
-  weathercode: data.daily.weathercode[index],
-  tempMax: round(data.daily.temperature_2m_max[index] ?? 0),
-  tempMin: round(data.daily.temperature_2m_min[index] ?? 0),
-  precipitation: round(data.daily.precipitation_sum[index] ?? 0),
-  precipitationProbability: data.daily.precipitation_probability_max?.[index] ?? null,
-}));
-
+      date,
+      weathercode: data.daily.weathercode[index],
+      tempMax: round(data.daily.temperature_2m_max[index] ?? 0),
+      tempMin: round(data.daily.temperature_2m_min[index] ?? 0),
+      precipitation: round(data.daily.precipitation_sum[index] ?? 0),
+      precipitationProbability:
+        data.daily.precipitation_probability_max?.[index] ?? null,
+    }));
 
     return {
       // ===== CLIMA ATUAL =====
-      temperature: round(
-        get(data.hourly.temperature_2m) ||
-          data.current_weather.temperature
-      ),
+      temperature: round(get(data.hourly.temperature_2m) || data.current_weather.temperature),
       weathercode: data.current_weather.weathercode,
       windspeed: round(data.current_weather.windspeed),
       winddirection: data.current_weather.winddirection ?? null,
-      apparent_temperature: round(
-        get(data.hourly.apparent_temperature) ||
-          data.current_weather.temperature
-      ),
+      apparent_temperature: round(get(data.hourly.apparent_temperature) || data.current_weather.temperature),
       humidity: Math.round(get(data.hourly.relativehumidity_2m) || 0),
       precipitation_hourly: round(get(data.hourly.precipitation)),
       precipitation: round(data.daily.precipitation_sum?.[0] ?? 0),
       tempMin: round(data.daily.temperature_2m_min?.[0] ?? 0),
       tempMax: round(data.daily.temperature_2m_max?.[0] ?? 0),
-      precipitation_probability:
-        data.daily.precipitation_probability_max?.[0] ?? null,
+      precipitation_probability: data.daily.precipitation_probability_max?.[0] ?? null,
       pressure: data.hourly.pressure_msl?.[idx] ?? null,
       dewpoint: round(data.hourly.dewpoint_2m?.[idx] ?? 0),
       timezone_offset: tzOffset,
       _currentHourIndex: idx,
 
       // ===== PRÓXIMOS DIAS =====
-      daily: dailyForecast, // 👈 array agora contém o weathercode de cada dia
+      daily: dailyForecast,
     };
   } catch (err) {
     console.log("Erro getWeatherByCoords:", err.message);
@@ -73,8 +71,10 @@ export async function getWeatherByCoords(lat, lon) {
   }
 }
 
+// ========================= FUNÇÃO AUXILIAR: GET WEATHER BY CITY =========================
 export async function getWeatherByCity(city) {
   try {
+    // Busca geolocalização da cidade
     const geoRes = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
         city
@@ -84,21 +84,21 @@ export async function getWeatherByCity(city) {
     if (!geoRes.ok) throw new Error("Erro na API de geolocalização");
 
     const geoData = await geoRes.json();
-    if (!geoData.results?.length)
-      throw new Error("Cidade não encontrada");
+    if (!geoData.results?.length) throw new Error("Cidade não encontrada");
 
+    // Filtra apenas cidades habitadas
     const cityResult = geoData.results.find((r) =>
       ["PPL", "PPLC", "PPLA"].includes(r.feature_code)
     );
-
-    if (!cityResult)
-      throw new Error("Nenhuma cidade habitada encontrada");
+    if (!cityResult) throw new Error("Nenhuma cidade habitada encontrada");
 
     const { latitude, longitude, name, admin1, country } = cityResult;
 
+    // Busca o clima da cidade via coordenadas
     const weatherData = await getWeatherByCoords(latitude, longitude);
     if (!weatherData) return null;
 
+    // Retorna dados completos com informações da cidade
     return {
       ...weatherData,
       cityName: name,
@@ -112,5 +112,3 @@ export async function getWeatherByCity(city) {
     return null;
   }
 }
-
-

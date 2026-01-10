@@ -1,24 +1,57 @@
-import { View, Text, StyleSheet, ScrollView, Pressable} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  getWeatherEmoji,
-} from "../utils/getWeatherEmoji";
+// React Native
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 
+// Icons
+import { Ionicons } from "@expo/vector-icons";
+
+// Expo
+import { LinearGradient } from "expo-linear-gradient";
+
+// Utils
+import { getWeatherEmoji } from "../utils/getWeatherEmoji";
+import { formatTemperature } from "../utils/temperature";
+
+/**
+ * DailyForecast
+ *
+ * Papel do componente:
+ * - Exibir a previsão dos próximos dias em formato horizontal
+ * - Permitir seleção de um dia específico
+ *
+ * Uso em conjunto com o Home:
+ * - O Home controla qual dia está ativo (`activeDayIndex`)
+ * - O Home recebe o callback `onSelectDay` para reagir à seleção
+ * - Este componente apenas renderiza a lista e dispara o evento
+ *
+ * Props recebidas do Home:
+ * @param {object} weather - Objeto de clima com array `daily`
+ * @param {number} activeDayIndex - Índice do dia atualmente selecionado
+ * @param {function} onSelectDay - Callback acionado ao selecionar um dia
+ * @param {string} unit - Unidade de temperatura ("celsius" | "fahrenheit")
+ *
+ * O que retorna para o Home:
+ * - Um seletor visual de dias futuros
+ * - Dispara `onSelectDay(day, index)` ao usuário interagir
+ */
 export function DailyForecast({
   weather,
   activeDayIndex,
   onSelectDay,
+  unit,
 }) {
+  // Segurança: não renderiza sem previsão diária válida
   if (!weather?.daily?.length) return null;
 
   return (
-      <View style={styles.daily}>
-        <View style={styles.dailyTitle}>
-          <Ionicons name="calendar" size={20} color={"#333"} />
-          <Text style={styles.dailyText}>Próximos dias</Text>
-        </View>
-            <View style={styles.dailySection}>
+    <View style={styles.daily}>
+      {/* Título da seção */}
+      <View style={styles.dailyTitle}>
+        <Ionicons name="calendar" size={20} color="#333" />
+        <Text style={styles.dailyText}>Próximos dias</Text>
+      </View>
+
+      {/* Lista horizontal de dias */}
+      <View style={styles.dailySection}>
         <View style={{ position: "relative" }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {weather.daily
@@ -29,13 +62,20 @@ export function DailyForecast({
               )
               .map((item, i) => {
                 const date = new Date(item.date);
+
                 const today = new Date();
                 const tomorrow = new Date(today);
                 tomorrow.setDate(today.getDate() + 1);
                 tomorrow.setHours(0, 0, 0, 0);
+
                 const d1 = new Date(item.date).setHours(0, 0, 0, 0);
-                const d2 = today.setHours(0, 0, 0, 0);
+                const d2 = new Date().setHours(0, 0, 0, 0);
+
                 const isToday = d1 === d2;
+
+                const maxTemp = isToday ? weather.tempMax : item.tempMax;
+                const minTemp = isToday ? weather.tempMin : item.tempMin;
+
                 const label = isToday
                   ? "Hoje"
                   : d1 === tomorrow.getTime()
@@ -43,6 +83,7 @@ export function DailyForecast({
                   : date.toLocaleDateString("pt-BR", {
                       weekday: "short",
                     });
+
                 const emoji = isToday
                   ? getWeatherEmoji(
                       weather.daily[0].weathercode,
@@ -51,6 +92,7 @@ export function DailyForecast({
                   : getWeatherEmoji(item.weathercode, weather?.timezone_offset, {
                       forceDay: true,
                     });
+
                 return (
                   <Pressable
                     key={i}
@@ -62,23 +104,20 @@ export function DailyForecast({
                   >
                     <Text style={styles.dailyDay}>{label}</Text>
                     <Text style={{ fontSize: 30 }}>{emoji}</Text>
+
                     <Text style={styles.dailyTempMax}>
-                      {Math.round(
-                        isToday ? weather.tempMax : item.tempMax
-                      )}
-                      °
+                      {formatTemperature(maxTemp, unit)}
                     </Text>
+
                     <Text style={styles.dailyTempMin}>
-                      {Math.round(
-                        isToday ? weather.tempMin : item.tempMin
-                      )}
-                      °
+                      {formatTemperature(minTemp, unit)}
                     </Text>
                   </Pressable>
                 );
               })}
           </ScrollView>
-          {/* GRADIENTES */}
+
+          {/* Gradientes laterais para efeito de fade */}
           <LinearGradient
             colors={["#fff", "#fff", "transparent"]}
             start={{ x: 1, y: 0 }}
@@ -86,6 +125,7 @@ export function DailyForecast({
             style={styles.gradientRight}
             pointerEvents="none"
           />
+
           <LinearGradient
             colors={["#fff", "#fff", "transparent"]}
             start={{ x: 0, y: 0 }}
@@ -94,45 +134,45 @@ export function DailyForecast({
             pointerEvents="none"
           />
         </View>
-            </View>
       </View>
+    </View>
   );
 }
+
 const styles = StyleSheet.create({
   daily: {
-  marginHorizontal: 20,
-  borderRadius: 20,
- },
- dailyTitle: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: 10,
-  paddingVertical: 15,
-  borderRadius: 20,
-  backgroundColor: "#fff",
-  gap: 10,
-  elevation: 1,       // sombra no título ✔
-  overflow: "hidden", // respeita o radius da sombra no Android ✔
+    marginHorizontal: 20,
+    borderRadius: 20,
+  },
 
-  // ❗ removendo qualquer borda:
-  borderWidth: 0,
-  borderBottomWidth: 0,
-  borderColor: "transparent",
-  zIndex: 10,
-},
-dailyText:{
-  fontSize: 15,
-  fontWeight: "600",
-},
+  dailyTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 15,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    gap: 10,
+    elevation: 1,
+    overflow: "hidden",
+    borderWidth: 0,
+    borderColor: "transparent",
+    zIndex: 10,
+  },
 
-dailySection: {
-  marginBottom: 10,
-  borderRadius: 20,
-  backgroundColor: "#fff",
-  paddingVertical: 20,
-  elevation: 1,        // sombra na section
-  overflow: "hidden",  // respeita o radius no Android
-},
+  dailyText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  dailySection: {
+    marginBottom: 10,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    paddingVertical: 20,
+    elevation: 1,
+    overflow: "hidden",
+  },
 
   dailyCard: {
     justifyContent: "center",
@@ -147,7 +187,7 @@ dailySection: {
   },
 
   dailyTempMax: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: "800",
     color: "#333",
   },
@@ -174,4 +214,3 @@ dailySection: {
     width: 15,
   },
 });
-

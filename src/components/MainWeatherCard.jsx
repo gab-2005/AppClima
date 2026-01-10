@@ -1,23 +1,43 @@
+// React Native
 import { View, Text } from "react-native";
+
+// Expo
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+
+// Utils
 import {
   getWeatherEmoji,
   getDayNightEmoji,
 } from "../utils/getWeatherEmoji";
 import { getWeatherDescription } from "../utils/getWeatherDescription";
-import { convertTemperature } from "../utils/temperature";
+import { formatTemperature } from "../utils/temperature";
 
-
-export function MainWeatherCard({ weather, isNight, unit}) {
-    if (!weather) return null;
-
-  // temperatura atual (corrigido para usar o valor da API)
-  const currentTemp = weather?.temperature ?? 0;
-  const temp = convertTemperature(currentTemp, unit);
-
-
-
+/**
+ * MainWeatherCard
+ *
+ * Papel do componente:
+ * - Exibir as informações principais do clima do dia atual
+ * - Emoji do clima
+ * - Data atual
+ * - Temperatura formatada conforme a unidade
+ * - Descrição do clima (dia/noite)
+ *
+ * Uso em conjunto com o Home:
+ * - O Home busca e gerencia os dados do clima
+ * - Este componente apenas recebe os dados prontos via props
+ * - Não possui estado próprio nem lógica de negócio
+ *
+ * Props recebidas do Home:
+ * @param {object} weather - Objeto de clima retornado pela API
+ * @param {string} unit - Unidade de temperatura ("celsius" ou "fahrenheit")
+ *
+ * O que retorna para o Home:
+ * - Um cartão visual com o resumo do clima atual
+ */
+export function MainWeatherCard({ weather, unit }) {
+  // Segurança: não renderiza nada sem dados válidos
+  if (!weather) return null;
 
   return (
     <LinearGradient
@@ -32,7 +52,14 @@ export function MainWeatherCard({ weather, isNight, unit}) {
         minHeight: 180,
       }}
     >
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {/* Coluna esquerda: Emoji do clima */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <Text style={{ fontSize: 125 }}>
           {getWeatherEmoji(
             weather.daily[0].weathercode,
@@ -41,11 +68,21 @@ export function MainWeatherCard({ weather, isNight, unit}) {
         </Text>
       </View>
 
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", gap: 2 }}>
+      {/* Coluna direita: Data, temperatura e descrição */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        {/* Dia da semana */}
         <Text style={{ fontSize: 25, color: "#fff" }}>
           {new Date().toLocaleDateString("pt-BR", { weekday: "long" })}
         </Text>
 
+        {/* Dia e mês */}
         <Text style={{ fontSize: 15, color: "#fff" }}>
           {new Date().toLocaleDateString("pt-BR", {
             day: "2-digit",
@@ -53,18 +90,24 @@ export function MainWeatherCard({ weather, isNight, unit}) {
           })}
         </Text>
 
+        {/* Temperatura atual */}
         <Text style={{ fontSize: 40, color: "#fff" }}>
-          <Text style={{ fontSize: 40, color: "#fff" }}>
-          {temp !== undefined ? Math.round(temp) : "--"}°{unit === "celsius" ? "C" : "F"}
+          {formatTemperature(weather.temperature, unit)}
         </Text>
 
-        </Text>
-
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+        {/* Ícone dia/noite + descrição do clima */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 5,
+          }}
+        >
           <Ionicons
             style={{ fontSize: 18, color: "#fff" }}
             name={getDayNightEmoji(weather?.timezone_offset)}
           />
+
           <Text style={{ fontSize: 10, color: "#fff" }}>
             {getWeatherDescription(
               weather.daily[0].weathercode,

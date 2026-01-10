@@ -11,6 +11,23 @@ import {
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 
+/**
+ * SearchOverlay
+ * --------------------------------------------------
+ * Overlay de sugestões de busca.
+ *
+ * Props:
+ * - isVisible → controla visibilidade do overlay
+ * - overlayOpacity → animação de opacidade
+ * - suggestionsScale → animação de escala
+ * - citySuggestions → array de sugestões da API
+ * - recentCities → array de cidades recentes
+ * - isLoading → indica loading de sugestões
+ * - showEmptyState → mostra estado vazio
+ * - showRecentCities → mostra histórico
+ * - onSelectSuggestion → callback ao clicar em uma cidade
+ * - onClose → fecha overlay
+ */
 export function SearchOverlay({
   isVisible,
   overlayOpacity,
@@ -26,33 +43,32 @@ export function SearchOverlay({
   if (!isVisible) return null;
 
   return (
-    <Animated.View style={[styles.overlayWrapper, { opacity: overlayOpacity }]}>
+    <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+      {/* Blur de fundo */}
       <BlurView intensity={85} tint="dark" style={StyleSheet.absoluteFill} />
+      {/* Pressable para fechar ao tocar fora */}
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
       <Animated.View
-        style={[
-          styles.overlayContent,
-          { transform: [{ scale: suggestionsScale }] },
-        ]}
+        style={[styles.content, { transform: [{ scale: suggestionsScale }] }]}
       >
-        <View style={styles.suggestionsContainer}>
-          {/* RECENTES */}
+        <View style={styles.box}>
+          {/* Histórico */}
           {showRecentCities && (
             <ScrollView
-              keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
               {recentCities.map((item, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.suggestionItem}
+                  style={styles.item}
                   onPress={() => onSelectSuggestion(item)}
                 >
                   <Ionicons name="time-outline" size={20} color="#666" />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.suggestionName}>{item.name}</Text>
-                    <Text style={styles.suggestionRegion}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.region}>
                       {item.admin1}, {item.country}
                     </Text>
                   </View>
@@ -61,49 +77,46 @@ export function SearchOverlay({
             </ScrollView>
           )}
 
-          {/* LOADING */}
+          {/* Loading */}
           {isLoading && (
-            <View style={styles.loadingContainer}>
+            <View style={styles.center}>
               <ActivityIndicator size="small" color="#666" />
-              <Text style={styles.loadingText}>Buscando cidades...</Text>
+              <Text style={styles.helper}>Buscando cidades...</Text>
             </View>
           )}
 
-          {/* SUGESTÕES */}
+          {/* Sugestões da API */}
           {!isLoading && citySuggestions.length > 0 && (
             <ScrollView
-              keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
               {citySuggestions.map((item, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.suggestionItem}
+                  style={styles.item}
                   onPress={() => onSelectSuggestion(item)}
                 >
                   <Ionicons name="location-outline" size={20} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.suggestionName}>{item.name}</Text>
+                    <Text style={styles.name}>{item.name}</Text>
                     {item.admin1 && (
-                      <Text style={styles.suggestionRegion}>
+                      <Text style={styles.region}>
                         {item.admin1}, {item.country}
                       </Text>
                     )}
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color="#ccc" />
                 </TouchableOpacity>
               ))}
             </ScrollView>
           )}
 
-          {/* EMPTY */}
+          {/* Estado vazio */}
           {!isLoading && showEmptyState && (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={20} color="#ccc" />
-              <Text style={styles.emptyText}>Nenhuma cidade encontrada</Text>
-              <Text style={styles.emptySubtext}>
-                Tente buscar com outro nome
-              </Text>
+            <View style={styles.center}>
+              <Ionicons name="search-outline" size={22} color="#ccc" />
+              <Text style={styles.empty}>Nenhuma cidade encontrada</Text>
+              <Text style={styles.helper}>Tente buscar com outro nome</Text>
             </View>
           )}
         </View>
@@ -113,57 +126,48 @@ export function SearchOverlay({
 }
 
 const styles = StyleSheet.create({
-  overlayWrapper: {
+  overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
   },
-  overlayContent: {
+  content: {
     marginTop: 180,
     marginHorizontal: 20,
   },
-  suggestionsContainer: {
+  box: {
     backgroundColor: "#fff",
     borderRadius: 20,
     maxHeight: 450,
     overflow: "hidden",
   },
-  suggestionItem: {
+  item: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: "#eee",
   },
-  suggestionName: {
+  name: {
     fontSize: 14,
     fontWeight: "600",
     color: "#333",
   },
-  suggestionRegion: {
+  region: {
     fontSize: 12,
     color: "#666",
   },
-  loadingContainer: {
+  center: {
     padding: 40,
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
-  
-  loadingText: {
-    color: "#666",
-  },
-  emptyContainer: {
-    padding: 40,
-    alignItems: "center",
-    gap: 6,
-  },
-  emptyText: {
+  empty: {
     fontSize: 15,
     fontWeight: "600",
     color: "#666",
   },
-  emptySubtext: {
+  helper: {
     fontSize: 12,
     color: "#999",
   },
