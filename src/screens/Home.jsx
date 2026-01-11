@@ -1,26 +1,25 @@
 // ========================= IMPORTS =========================
+// React Native core
 import {
   View,
   StatusBar,
   StyleSheet,
   Animated,
-  Linking,
+  Linking,  
 } from "react-native";
-import Constants from "expo-constants";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants"; // para statusBarHeight
 import { useState, useEffect, useRef } from "react";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "expo-haptics"; // vibração tátil
 
-// Hooks
-import { useLocation, LOCATION_STATUS } from "../hooks/useLocation";
-import { useWeather } from "../hooks/useWeather";
+// ========================= HOOKS =========================
+import { useLocation, LOCATION_STATUS } from "../hooks/useLocation"; // hook de permissão de localização
+import { useWeather } from "../hooks/useWeather"; // hook customizado para buscar o clima
 
-// Utils / Storage
-import { fetchCitySuggestions } from "../utils/cityApi";
-import { getWeatherDescription } from "../utils/getWeatherDescription";
-import {
-  getWeatherEmoji,
-  isNightWithOffset,
-} from "../utils/getWeatherEmoji";
+// ========================= UTILS / STORAGE =========================
+import { fetchCitySuggestions } from "../utils/cityApi"; // sugestões de cidades
+import { getWeatherDescription } from "../utils/getWeatherDescription"; // descrição do clima
+import { getWeatherEmoji, isNightWithOffset } from "../utils/getWeatherEmoji"; // emoji do clima + checa se é noite
 import {
   saveLastCity,
   getLastCity,
@@ -28,9 +27,9 @@ import {
   getRecentCities,
   getSettings,
   saveSettings,
-} from "../storage/weatherStorage";
+} from "../storage/weatherStorage"; // armazenamento local (última cidade, recentes, configs)
 
-// Components
+// ========================= COMPONENTES =========================
 import { HeaderLocation } from "../components/HeaderLocation";
 import { SearchBox } from "../components/SearchBox";
 import { SearchOverlay } from "../components/SearchOverlay";
@@ -40,30 +39,30 @@ import { DailyForecast } from "../components/DailyForecast";
 import { WeatherLoading } from "../components/WeatherLoading";
 import { WeatherError } from "../components/WeatherError";
 
-// ========================= CONSTANTS =========================
-const STATUS_BAR_HEIGHT = Constants.statusBarHeight;
+// ========================= CONSTANTES =========================
+const STATUS_BAR_HEIGHT = Constants.statusBarHeight; // altura da status bar do dispositivo
 
-// ========================= COMPONENT =========================
+// ========================= COMPONENTE PRINCIPAL =========================
 export default function Home() {
-  // --------------------- HOOKS DE ESTADO ---------------------
-  const { status, locationLabel } = useLocation();
-  const [city, setCity] = useState("");
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [showEmptyState, setShowEmptyState] = useState(false);
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  const [recentCities, setRecentCities] = useState([]);
-  const [activeDayIndex, setActiveDayIndex] = useState(0);
-  const [unit, setUnit] = useState("celsius");
+  // --------------------- ESTADO ---------------------
+  const { status, locationLabel } = useLocation(); // status da localização e nome do local
+  const [city, setCity] = useState(""); // cidade digitada no input
+  const [citySuggestions, setCitySuggestions] = useState([]); // lista de sugestões da API
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false); // loading do input
+  const [showEmptyState, setShowEmptyState] = useState(false); // mostrar "nenhuma cidade encontrada"
+  const [isInputFocused, setIsInputFocused] = useState(false); // input focado
+  const [recentCities, setRecentCities] = useState([]); // histórico de cidades recentes
+  const [activeDayIndex, setActiveDayIndex] = useState(0); // dia ativo na previsão
+  const [unit, setUnit] = useState("celsius"); // unidade de temperatura (°C ou °F)
 
-  // --------------------- REFERÊNCIAS ------------------------
-  const inputRef = useRef(null);
-  const debounceTimer = useRef(null);
-  const blurTimeout = useRef(null);
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const suggestionsScale = useRef(new Animated.Value(0.9)).current;
+  // --------------------- REFERÊNCIAS ---------------------
+  const inputRef = useRef(null); // referência do TextInput
+  const debounceTimer = useRef(null); // debounce para input
+  const blurTimeout = useRef(null); // delay ao desfocar input
+  const overlayOpacity = useRef(new Animated.Value(0)).current; // animação do overlay
+  const suggestionsScale = useRef(new Animated.Value(0.9)).current; // animação de scale do overlay
 
-  // --------------------- HOOK DE CLIMA ----------------------
+  // --------------------- HOOK DE CLIMA ---------------------
   const {
     weather,
     loading,
@@ -73,50 +72,50 @@ export default function Home() {
     fetchWeatherByCity,
     fetchWeatherByCoordsWithCity,
     clearSearch,
-  } = useWeather();
+  } = useWeather(); // funções e dados do hook de clima
 
-  // --------------------- VARIÁVEIS DERIVADAS ----------------
-  const weatherEmoji = getWeatherEmoji(weather?.weathercode, weather?.timezone_offset);
+  // --------------------- VARIÁVEIS DERIVADAS ---------------------
+  const weatherEmoji = getWeatherEmoji(weather?.weathercode, weather?.timezone_offset); // emoji do clima atual
   const weatherDescription = weather
     ? getWeatherDescription(weather.weathercode, weather?.timezone_offset)
-    : "";
+    : ""; // descrição do clima
   const todayDaily = weather?.daily?.find(
     (d) => new Date(d.date).setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0)
-  );
+  ); // previsão do "hoje" (sem considerar fuso ainda)
 
-  const hasSuggestions = citySuggestions.length > 0 || isLoadingSuggestions || showEmptyState;
-  const isSearchActive = isInputFocused || hasSuggestions;
-  const showRecentCities = isInputFocused && city.length === 0 && recentCities.length > 0;
+  const hasSuggestions = citySuggestions.length > 0 || isLoadingSuggestions || showEmptyState; // verifica se deve mostrar overlay
+  const isSearchActive = isInputFocused || hasSuggestions; // overlay ativo
+  const showRecentCities = isInputFocused && city.length === 0 && recentCities.length > 0; // mostra recentes se input vazio e focado
 
   // --------------------- USEEFFECTS -------------------------
-  // Carrega configurações, últimas cidades e clima inicial
+  // 1️⃣ Carrega configurações, últimas cidades e clima inicial
   useEffect(() => {
     async function loadAppData() {
       const settings = await getSettings();
-      if (settings?.unit) setUnit(settings.unit);
+      if (settings?.unit) setUnit(settings.unit); // aplica unidade salva
 
       const storedRecent = await getRecentCities();
-      if (storedRecent.length) setRecentCities(storedRecent);
+      if (storedRecent.length) setRecentCities(storedRecent); // carrega cidades recentes
 
       const lastCity = await getLastCity();
       if (lastCity) {
-        fetchWeatherByCity(lastCity.name, settings?.unit || "celsius");
+        fetchWeatherByCity(lastCity.name, settings?.unit || "celsius"); // busca clima da última cidade
       } else if (status === LOCATION_STATUS.GRANTED) {
-        fetchWeatherByCoords(settings?.unit || "celsius");
+        fetchWeatherByCoords(settings?.unit || "celsius"); // busca clima da localização atual
       }
     }
 
     loadAppData();
   }, [status]);
 
-  // Busca clima automático quando permissão de localização concedida
+  // 2️⃣ Atualiza clima automático quando permissão de localização concedida
   useEffect(() => {
     if (status === LOCATION_STATUS.GRANTED && !searchedCity) {
       fetchWeatherByCoords(unit);
     }
   }, [status, unit]);
 
-  // Animação do overlay
+  // 3️⃣ Animação do overlay (abrir/fechar)
   useEffect(() => {
     Animated.parallel([
       Animated.timing(overlayOpacity, {
@@ -133,7 +132,7 @@ export default function Home() {
     ]).start();
   }, [isSearchActive]);
 
-  // Limpeza de timers
+  // 4️⃣ Limpeza de timers (debounce e blur)
   useEffect(() => {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -142,15 +141,17 @@ export default function Home() {
   }, []);
 
   // --------------------- FUNÇÕES ---------------------------
+  // Adiciona cidade ao histórico recente e salva no storage
   const addRecentCity = (cityObj) => {
     setRecentCities((prev) => {
-      const filtered = prev.filter((c) => c.name !== cityObj.name);
-      const updated = [cityObj, ...filtered].slice(0, 5);
-      saveRecentCities(updated);
+      const filtered = prev.filter((c) => c.name !== cityObj.name); // remove duplicadas
+      const updated = [cityObj, ...filtered].slice(0, 5); // mantém máximo 5
+      saveRecentCities(updated); // salva localmente
       return updated;
     });
   };
 
+  // Fecha UI de busca
   const closeSearchUI = () => {
     setCitySuggestions([]);
     setIsLoadingSuggestions(false);
@@ -159,6 +160,7 @@ export default function Home() {
     inputRef.current?.blur();
   };
 
+  // Busca sugestões ao digitar na caixa de pesquisa
   const handleCityChange = (text) => {
     setCity(text);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -173,6 +175,7 @@ export default function Home() {
     setIsLoadingSuggestions(true);
     setShowEmptyState(false);
 
+    // Debounce: espera 300ms após digitar antes de chamar API
     debounceTimer.current = setTimeout(async () => {
       try {
         const suggestions = await fetchCitySuggestions(text);
@@ -191,47 +194,67 @@ export default function Home() {
       }
     }, 300);
   };
+
+  // Seleção de uma cidade da lista de sugestões
   const handleSelectSuggestion = (suggestion) => {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // feedback tátil
 
-  // Se a cidade clicada já está sendo exibida, só fecha overlay
-  if (suggestion.name === searchedCity) {
+    if (suggestion.name === searchedCity) {
+      setCity(suggestion.name);
+      closeSearchUI();
+      return;
+    }
+
+    addRecentCity(suggestion); // adiciona aos recentes
+    saveLastCity(suggestion); // salva a última cidade
+
     setCity(suggestion.name);
+
+    const { latitude, longitude, name: cityName, admin1, country } = suggestion;
     closeSearchUI();
-    return;
-  }
 
-  addRecentCity(suggestion);
-  saveLastCity(suggestion); // salva a última cidade
-
-  setCity(suggestion.name);
-
-  const cityName = suggestion.name;
-  const { latitude, longitude, admin1, country } = suggestion;
-  closeSearchUI();
-
-  // Dispara fetch só se for uma cidade nova
-  if (latitude && longitude) {
-    fetchWeatherByCoordsWithCity(
-      latitude,
-      longitude,
-      cityName,
-      admin1,
-      country
-    );
-  } else {
-    fetchWeatherByCity(cityName);
-  }
-};
-  const handleSearch = () => {
-    if (!city.trim()) return;
-    const cityObj = { name: city };
-    addRecentCity(cityObj);
-    saveLastCity(cityObj);
-    closeSearchUI();
-    fetchWeatherByCity(city);
+    if (latitude && longitude) {
+      fetchWeatherByCoordsWithCity(latitude, longitude, cityName, admin1, country);
+    } else {
+      fetchWeatherByCity(cityName);
+    }
   };
 
+  // Executa busca manual ao pressionar botão
+// Executa busca manual ao pressionar botão
+const handleSearch = () => {
+  if (!city.trim()) return; // não faz nada se input vazio
+
+  // Pega a primeira sugestão se houver
+  const firstSuggestion = citySuggestions[0];
+
+  const cityObj = firstSuggestion
+    ? firstSuggestion // usa todos os dados da sugestão
+    : { name: city, admin1: "", country: "" }; // fallback se não houver sugestão
+
+  // Adiciona aos recentes e salva última cidade
+  addRecentCity(cityObj);
+  saveLastCity(cityObj);
+
+  // Fecha overlay e limpa UI
+  closeSearchUI();
+
+  // Faz a requisição de clima
+  if (cityObj.latitude && cityObj.longitude) {
+    fetchWeatherByCoordsWithCity(
+      cityObj.latitude,
+      cityObj.longitude,
+      cityObj.name,
+      cityObj.admin1,
+      cityObj.country
+    );
+  } else {
+    fetchWeatherByCity(cityObj.name);
+  }
+};
+
+
+  // Troca unidade de temperatura
   const handleChangeUnit = (value) => {
     setUnit(value);
     saveSettings({ unit: value });
@@ -247,16 +270,17 @@ export default function Home() {
     closeSearchUI();
   };
 
+  // Seleção de dia na previsão
   const handleSelectDay = (_, index) => {
     Haptics.selectionAsync();
     setActiveDayIndex(index);
   };
 
-  const isNight = isNightWithOffset(weather?.timezone_offset);
+  const isNight = isNightWithOffset(weather?.timezone_offset); // verifica se é noite no fuso da cidade
 
   // --------------------- RENDER ---------------------------
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
       {/* HEADER */}
@@ -333,7 +357,7 @@ export default function Home() {
           unit={unit}
         />
       )}
-    </View>
+    </SafeAreaView >
   );
 }
 
@@ -341,9 +365,8 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: STATUS_BAR_HEIGHT,
   },
   main: {
-    flex: 1,
+    flex: 1, // ocupa espaço restante
   },
 });

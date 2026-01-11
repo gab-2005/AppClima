@@ -72,6 +72,9 @@ export function SearchOverlay({
                       {item.admin1}, {item.country}
                     </Text>
                   </View>
+                  
+                  {/* Ícone de seta no canto direito */}
+                  <Ionicons name="chevron-forward-outline" size={20} color="#999" />
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -106,6 +109,9 @@ export function SearchOverlay({
                       </Text>
                     )}
                   </View>
+                  
+                  {/* Ícone de seta no canto direito */}
+                  <Ionicons name="chevron-forward-outline" size={20} color="#999" />
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -133,20 +139,25 @@ const styles = StyleSheet.create({
   content: {
     marginTop: 180,
     marginHorizontal: 20,
+  
   },
   box: {
     backgroundColor: "#fff",
     borderRadius: 20,
     maxHeight: 450,
     overflow: "hidden",
+    paddingHorizontal: 10,
+  
   },
   item: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     gap: 10,
-    padding: 15,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+
   },
   name: {
     fontSize: 14,

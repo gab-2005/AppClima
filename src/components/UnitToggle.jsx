@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 20,
     borderRadius: 22,
-    backgroundColor: "#4d4d4dff",
+    backgroundColor: "#b8b8b8ff",
     justifyContent: "center",
   },
 
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
     borderRadius: 20,
-    backgroundColor: "#fff",
+    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
     elevation: 2,
@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
 
   // Texto da unidade (°C / °F)
   thumbText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
-    color: "#000",
+    color: "#ff7b00ff",
     start: -2,
   },
 });
