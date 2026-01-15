@@ -121,31 +121,16 @@ npx expo start
 ```
 
 
+## 🚀 Como Executar o Projeto
 
-Após isso:
+Para visualizar o aplicativo em execução, siga os passos abaixo:
 
-Escaneie o QR Code com o Expo Go no celular
+1. Certifique-se de ter o **Node.js** e o **Expo CLI** instalados.
 
-Ou pressione:
-
-a para abrir no Android
-
-i para abrir no iOS (Mac)
-
-### ⚙️ Observações Importantes
-
-O app utiliza localização do dispositivo, então é necessário permitir o acesso quando solicitado.
-
-A busca de cidades depende de conexão com a internet.
-
-As preferências de unidade (°C / °F) são salvas localmente.
-
-### 🧪 Ambiente de Desenvolvimento
-
-React Native (Expo)
-
-JavaScript (ES6+)
-
-APIs de clima e geolocalização
+2. Instale as dependências com `npm install` ou `yarn`.
+   
+3. Inicie o servidor de desenvolvimento:
+   ```bash
+   npx expo start
 
 
