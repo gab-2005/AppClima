@@ -1,87 +1,107 @@
-// ========================= IMPORTS =========================
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-// ========================= COMPONENT =========================
-// Componente responsável por exibir erros de carregamento do clima
-//
-// USO NO HOME:
-// - Recebe `message` → mensagem de erro do Home
-// - Recebe `onRetry` → função que dispara novamente o fetch do clima
-// - Renderiza ícone, título, mensagem e botão de retry
-export function WeatherError({ message, onRetry }) {
+export function WeatherError({
+  variant = "error",
+  title,
+  message,
+  onRetry,
+  showRetry = true,
+}) {
+  const config = {
+    error: {
+      icon: "alert-circle-outline",
+      defaultTitle: "Algo deu errado",
+      defaultMessage: "Não foi possível carregar o clima.",
+    },
+     location: {
+      icon: "earth-off",
+      defaultTitle: "Localização indisponível",
+      defaultMessage:
+        "Ative a localização para ver o clima exato de onde você está ou pesquise uma cidade.",
+    },
+   
+    empty: {
+      icon: "weather-cloudy",
+      defaultTitle: "Nenhuma informação",
+      defaultMessage: "Busque uma cidade para começar.",
+    },
+  };
+
+  const current = config[variant] || config.error;
+
   return (
-    <View style={styles.errorWrapper}>
-      <View style={styles.errorCard}>
-        {/* Ícone de aviso */}
-        <Ionicons name="warning-outline" size={28} color="#c0392b" />
+    <View style={styles.container}>
+      <MaterialCommunityIcons
+        name={current.icon}
+        size={80}
+        color="#999"
+        style={styles.icon}
+      />
 
-        {/* Título do erro */}
-        <Text style={styles.errorTitle}>Erro ao carregar clima</Text>
+      <Text style={styles.title}>
+        {title || current.defaultTitle}
+      </Text>
 
-        {/* Mensagem detalhada do erro */}
-        <Text style={styles.errorText}>{message}</Text>
+      <Text style={styles.text}>
+        {message || current.defaultMessage}
+      </Text>
 
-        {/* Botão para tentar novamente */}
-        <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-          <Text style={styles.retryText}>Tentar novamente</Text>
+      {showRetry && onRetry && (
+        <TouchableOpacity style={styles.button} onPress={onRetry}>
+          <Text style={styles.buttonText}>Tentar novamente</Text>
         </TouchableOpacity>
-      </View>
+      )}
     </View>
   );
 }
 
-// ========================= STYLES =========================
+
 const styles = StyleSheet.create({
-  // Container principal, centraliza o card de erro
-  errorWrapper: {
-    flex: 1,
+  container: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
-    marginHorizontal: 20,
-  },
-
-  // Card do erro
-  errorCard: {
-    borderRadius: 20,
-    padding: 30,
-    backgroundColor: "#fff",
-    elevation: 2,
     alignItems: "center",
-    gap: 12, // espaço entre elementos
+    paddingHorizontal: 32,
   },
 
-  // Título do erro
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+  icon: {
+    marginBottom: 16,
+    opacity: 0.8,
+  },
+
+  title: {
+    fontSize: 25,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 8,
     color: "#222",
-    textAlign: "center",
   },
 
-  // Mensagem de erro detalhada
-  errorText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#555",
+  text: {
+    fontSize: 15,
     textAlign: "center",
+    color: "#666",
     lineHeight: 20,
+    marginBottom: 20,
   },
 
-  // Botão para retry
-  retryButton: {
-    marginTop: 6,
-    backgroundColor: "#222",
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+  button: {
+    marginTop: 8,
+    backgroundColor: "#000000ff",
+    paddingHorizontal: 22,
+    paddingVertical: 12,
     borderRadius: 10,
-    elevation: 2,
   },
 
-  // Texto do botão
-  retryText: {
+  buttonText: {
+    color: "#fff",
     fontSize: 14,
     fontWeight: "600",
-    color: "#fff",
-    textAlign: "center",
   },
 });
+

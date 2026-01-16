@@ -39,6 +39,7 @@ import { DailyForecast } from "../components/DailyForecast";
 import { WeatherLoading } from "../components/WeatherLoading";
 import { WeatherError } from "../components/WeatherError";
 
+
 // ========================= CONSTANTES =========================
 const STATUS_BAR_HEIGHT = Constants.statusBarHeight; // altura da status bar do dispositivo
 
@@ -90,23 +91,21 @@ export default function Home() {
   // --------------------- USEEFFECTS -------------------------
   // 1️⃣ Carrega configurações, últimas cidades e clima inicial
   useEffect(() => {
-    async function loadAppData() {
-      const settings = await getSettings();
-      if (settings?.unit) setUnit(settings.unit); // aplica unidade salva
+  async function loadAppData() {
+    const settings = await getSettings();
+    if (settings?.unit) setUnit(settings.unit);
 
-      const storedRecent = await getRecentCities();
-      if (storedRecent.length) setRecentCities(storedRecent); // carrega cidades recentes
+    const storedRecent = await getRecentCities();
+    if (storedRecent.length) setRecentCities(storedRecent);
 
-      const lastCity = await getLastCity();
-      if (lastCity) {
-        fetchWeatherByCity(lastCity.name, settings?.unit || "celsius"); // busca clima da última cidade
-      } else if (status === LOCATION_STATUS.GRANTED) {
-        fetchWeatherByCoords(settings?.unit || "celsius"); // busca clima da localização atual
-      }
+    // 🚫 NÃO buscar automaticamente a última cidade
+    if (status === LOCATION_STATUS.GRANTED) {
+      fetchWeatherByCoords(settings?.unit || "celsius");
     }
+  }
 
-    loadAppData();
-  }, [status]);
+  loadAppData();
+}, [status]);
 
   // 2️⃣ Atualiza clima automático quando permissão de localização concedida
   useEffect(() => {
@@ -332,6 +331,15 @@ const handleSearch = () => {
       {/* CLIMA PRINCIPAL */}
       <View style={styles.main}>
         {loading && <WeatherLoading />}
+        {status !== LOCATION_STATUS.GRANTED &&
+          !searchedCity &&
+          !loading &&
+          !weather && (
+            <WeatherError variant="location" showRetry={false} />
+        )}
+
+
+
         {!loading && error && (
           <WeatherError
             message={error}
